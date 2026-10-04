@@ -1,0 +1,1 @@
+Hi! I'm your Systems Thinking tutor. We're looking at {{model_title}}. You can ask for an overview, ask about any part, or ask me to walk through a loop. Where would you like to start?

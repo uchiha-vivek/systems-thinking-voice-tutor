@@ -1,0 +1,75 @@
+{
+  "id": "water-supply",
+  "title": "Formal and Informal Water Supply",
+  "description": "How water shortages push households toward informal suppliers, and how aging infrastructure feeds shortages.",
+  "verified": false,
+  "overview": {
+    "short": "Two connected systems: an informal water market with one growth loop and two limiting loops, and a formal utility whose aging infrastructure causes shortages."
+  },
+  "variables": [
+    { "id": "informal_supply", "label": "Informal supply" },
+    { "id": "informal_demand", "label": "Informal demand" },
+    { "id": "hh_income", "label": "Household income", "aliases": ["HH income", "income"] },
+    { "id": "total_expenditure", "label": "Total expenditure on water supply per household", "aliases": ["expenditure", "total expenditure", "spending on water"] },
+    { "id": "pressure_on_supplier", "label": "Pressure on informal supplier", "aliases": ["pressure"] },
+    { "id": "resources_to_expand", "label": "Resources to expand", "kind": "exogenous" },
+    { "id": "service_quality", "label": "Informal supply service quality", "aliases": ["service quality", "quality"] },
+    { "id": "consumer_satisfaction", "label": "Consumer satisfaction", "aliases": ["satisfaction"] },
+    { "id": "water_shortage", "label": "Water shortage", "aliases": ["shortage"] },
+    { "id": "formal_demand", "label": "Formal demand" },
+    { "id": "formal_supply", "label": "Formal supply" },
+    { "id": "population", "label": "Population", "kind": "exogenous" },
+    { "id": "need_for_rehab", "label": "Need for rehabilitation", "aliases": ["need for rehab"] },
+    { "id": "rehabilitation", "label": "Rehabilitation", "aliases": ["rehab"] },
+    { "id": "infrastructure_aging", "label": "Formal infrastructure aging", "aliases": ["aging", "infrastructure aging"] },
+    { "id": "infrastructure_capacity", "label": "Infrastructure capacity", "aliases": ["capacity"] }
+  ],
+  "links": [
+    { "from": "informal_supply", "to": "informal_demand", "polarity": "+" },
+    { "from": "informal_demand", "to": "informal_supply", "polarity": "+" },
+    { "from": "informal_demand", "to": "total_expenditure", "polarity": "+" },
+    { "from": "total_expenditure", "to": "hh_income", "polarity": "-" },
+    { "from": "hh_income", "to": "informal_demand", "polarity": "+" },
+    { "from": "informal_demand", "to": "pressure_on_supplier", "polarity": "+" },
+    { "from": "resources_to_expand", "to": "pressure_on_supplier", "polarity": "-" },
+    { "from": "pressure_on_supplier", "to": "service_quality", "polarity": "-" },
+    { "from": "service_quality", "to": "consumer_satisfaction", "polarity": "+" },
+    { "from": "consumer_satisfaction", "to": "informal_demand", "polarity": "+" },
+    { "from": "water_shortage", "to": "informal_demand", "polarity": "+" },
+    { "from": "informal_demand", "to": "formal_demand", "polarity": "-" },
+    { "from": "formal_demand", "to": "water_shortage", "polarity": "+" },
+    { "from": "population", "to": "formal_demand", "polarity": "+" },
+    { "from": "formal_supply", "to": "water_shortage", "polarity": "-" },
+    { "from": "water_shortage", "to": "need_for_rehab", "polarity": "+" },
+    { "from": "need_for_rehab", "to": "rehabilitation", "polarity": "+", "delay": true },
+    { "from": "rehabilitation", "to": "infrastructure_aging", "polarity": "-" },
+    { "from": "infrastructure_aging", "to": "infrastructure_capacity", "polarity": "-" },
+    { "from": "infrastructure_capacity", "to": "formal_supply", "polarity": "+" }
+  ],
+  "loops": [
+    { "id": "R3.1", "name": "informal market growth", "variables": ["informal_demand", "informal_supply"] },
+    { "id": "B3.1", "name": "household budget", "variables": ["informal_demand", "total_expenditure", "hh_income"] },
+    { "id": "B3.2", "name": "service quality", "variables": ["informal_demand", "pressure_on_supplier", "service_quality", "consumer_satisfaction"] },
+    { "id": "B2.1", "name": "demand shift", "variables": ["water_shortage", "informal_demand", "formal_demand"] },
+    { "id": "B4.1", "name": "infrastructure rehabilitation", "variables": ["water_shortage", "need_for_rehab", "rehabilitation", "infrastructure_aging", "infrastructure_capacity", "formal_supply"] }
+  ],
+  "behavior_graphs": [
+    {
+      "title": "Informal market over time",
+      "series": [
+        { "variable": "Sales", "pattern": "rises, peaks around the middle, then declines" },
+        { "variable": "Water quality", "pattern": "rises, then levels off" },
+        { "variable": "Informal supply capacity", "pattern": "rises, then levels off below sales" }
+      ],
+      "key_insight": "Sales overshoot and decline while capacity and quality level off: the balancing loops eventually dominate."
+    },
+    {
+      "title": "Formal infrastructure over time",
+      "series": [
+        { "variable": "Infrastructure efficiency", "pattern": "goes up and down in waves" },
+        { "variable": "Need for rehabilitation", "pattern": "also goes up and down, out of step with efficiency" }
+      ],
+      "key_insight": "Delayed rehabilitation makes efficiency oscillate instead of settling."
+    }
+  ]
+}

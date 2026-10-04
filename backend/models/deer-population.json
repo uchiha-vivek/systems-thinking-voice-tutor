@@ -1,0 +1,46 @@
+{
+  "id": "deer-population",
+  "title": "Deer Population",
+  "description": "A basic population model: births add deer, deaths remove deer.",
+  "verified": true,
+  "overview": {
+    "short": "A deer population model with two feedback loops: births drive growth, and deaths limit it."
+  },
+  "alt_text": "CLD with two loops for deer population: one reinforcing growth and one balancing through deaths.",
+  "variables": [
+    { "id": "deer_population", "label": "Deer population", "kind": "stock",
+      "aliases": ["deer", "population", "number of deer"],
+      "description": "How many deer there are. It is a stock: it accumulates births and loses deaths." },
+    { "id": "deer_births", "label": "Deer births per year", "kind": "flow",
+      "aliases": ["births", "birth rate", "deer births"],
+      "description": "How many deer are born each year. It flows into the population." },
+    { "id": "deer_deaths", "label": "Deer deaths per year", "kind": "flow",
+      "aliases": ["deaths", "death rate", "deer deaths"],
+      "description": "How many deer die each year. It flows out of the population." }
+  ],
+  "links": [
+    { "from": "deer_births", "to": "deer_population", "polarity": "+" },
+    { "from": "deer_population", "to": "deer_births", "polarity": "+" },
+    { "from": "deer_population", "to": "deer_deaths", "polarity": "+" },
+    { "from": "deer_deaths", "to": "deer_population", "polarity": "-" }
+  ],
+  "loops": [
+    { "id": "R", "name": "births loop", "variables": ["deer_population", "deer_births"],
+      "narrative": "More deer means more births each year, and more births mean even more deer, so the population grows." },
+    { "id": "B", "name": "deaths loop", "variables": ["deer_population", "deer_deaths"],
+      "narrative": "More deer means more deaths each year, and more deaths reduce the population, which slows growth." }
+  ],
+  "behavior_graphs": [
+    {
+      "title": "Population over time",
+      "x_axis": "Time in years, 0 to 50",
+      "series": [
+        { "variable": "Deer population", "pattern": "rises steadily over the whole period" },
+        { "variable": "Deer births per year", "pattern": "rises along with the population" },
+        { "variable": "Deer deaths per year", "pattern": "also rises, but stays below births" }
+      ],
+      "key_insight": "Births stay ahead of deaths, so the reinforcing loop dominates and the population keeps growing."
+    }
+  ],
+  "layout_description": "The deer population is in the center. Births are on the left with the reinforcing loop, marked R. Deaths are on the right with the balancing loop, marked B."
+}
