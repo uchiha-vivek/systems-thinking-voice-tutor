@@ -1,12 +1,33 @@
 "use client";
 
 import { ConversationProvider, useConversation } from "@elevenlabs/react";
-import { FormEvent, useEffect, useRef, useState } from "react";
+import { ChangeEvent, FormEvent, useEffect, useRef, useState } from "react";
 
+import { ModelGraph } from "@/lib/engine";
+import { MODELS } from "@/lib/models";
+import { parseStella, StellaError } from "@/lib/stella";
+import { clientToolsFor } from "@/lib/tools";
 import { ThemeSwitcher } from "./theme-switcher";
 
-type Model = { id: string; title: string };
 type Line = { who: string; text: string };
+
+const MAX_FILE_BYTES = 10 * 1024 * 1024;
+const UPLOAD_TAG = "[Upload]"; // marks the page's own message to the agent, so it isn't shown as the student's words
+
+const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
+
+/** One plain sentence about what was loaded. Counts come from the engine, never from the AI. */
+function summarize(graph: ModelGraph) {
+  const ov = graph.overview() as { title: string; number_of_variables: number; number_of_loops: number };
+  return `${ov.title}. It has ${plural(ov.number_of_variables, "variable")} and ${plural(ov.number_of_loops, "feedback loop")}.`;
+}
+
+function openingLine(graph: ModelGraph | null) {
+  const hello = "Hi! I'm your Systems Thinking tutor.";
+  return graph
+    ? `${hello} I've loaded ${summarize(graph)} Would you like me to describe it?`
+    : `${hello} To begin, upload your Stella model with the upload button on this page, and I'll walk you through it.`;
+}
 
 export function Tutor() {
   return (
@@ -17,8 +38,8 @@ export function Tutor() {
 }
 
 function TutorPage() {
-  const [models, setModels] = useState<Model[]>([]);
-  const [modelId, setModelId] = useState("");
+  const [loadNote, setLoadNote] = useState("");
+  const [loadError, setLoadError] = useState("");
   const [agentId, setAgentId] = useState("");
   const [status, setStatus] = useState("Not connected.");
   const [lines, setLines] = useState<Line[]>([]);
@@ -26,12 +47,19 @@ function TutorPage() {
   const [text, setText] = useState("");
   const textRef = useRef<HTMLInputElement>(null);
 
+  // The agent's tools run here, against whatever model is loaded right now.
+  const graphRef = useRef<ModelGraph | null>(null);
   const addLine = (who: string, text: string) => setLines((prev) => [...prev, { who, text }]);
 
   const conversation = useConversation({
+    // eslint-disable-next-line react-hooks/refs -- the ref is read when the agent calls a tool, not while rendering
+    clientTools: clientToolsFor(() => graphRef.current),
     onConnect: () => setStatus("Connected. Start speaking."),
     onDisconnect: () => setStatus("Conversation ended."),
-    onMessage: ({ role, message }) => addLine(role === "user" ? "You" : "Tutor", message),
+    onMessage: ({ role, message }) => {
+      if (role === "user" && message.startsWith(UPLOAD_TAG)) return;
+      addLine(role === "user" ? "You" : "Tutor", message);
+    },
     onError: (err) => setStatus(`Error: ${typeof err === "string" ? err : String(err)}`),
   });
 
@@ -40,22 +68,45 @@ function TutorPage() {
   useEffect(() => {
     (async () => {
       try {
-        const [config, list] = await Promise.all([
-          fetch("/api/config").then((r) => r.json()),
-          fetch("/api/models").then((r) => r.json()),
-        ]);
+        const config = await fetch("/api/config").then((r) => r.json());
         setAgentId(config.agent_id);
-        setModels(list);
-        if (list.length) setModelId(list[0].id);
       } catch {
-        setStatus("Could not reach the tutor server. Is the backend running?");
+        setStatus("Could not reach the tutor server.");
       }
     })();
   }, []);
 
+  /** Make `next` the model the tutor works from, and tell the agent if a conversation is already going. */
+  function load(next: ModelGraph) {
+    graphRef.current = next;
+    setLoadError("");
+    setLoadNote(`Loaded ${summarize(next)}`);
+    if (conversation.status === "connected") {
+      addLine("You (uploaded)", next.data.title);
+      conversation.sendUserMessage(
+        `${UPLOAD_TAG} The student just uploaded a model: ${summarize(next)} In one short sentence say what was loaded, then ask if they would like it described.`,
+      );
+    }
+  }
+
+  async function onUpload(e: ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = ""; // so choosing the same file again still counts
+    if (!file) return;
+    try {
+      if (/\.(png|jpe?g|gif|webp|pdf)$/i.test(file.name)) {
+        throw new StellaError("Pictures and PDFs are not supported yet. Please upload the Stella file, which ends in .stmx.");
+      }
+      if (file.size > MAX_FILE_BYTES) throw new StellaError("That file is too large. Models up to 10 megabytes are supported.");
+      load(new ModelGraph(parseStella(await file.text())));
+    } catch (err) {
+      setLoadNote("");
+      setLoadError(err instanceof StellaError ? err.message : "That file could not be read as a Stella model.");
+    }
+  }
+
   async function start() {
-    const model = models.find((m) => m.id === modelId);
-    if (!agentId || !model) {
+    if (!agentId) {
       setStatus("The tutor is not configured yet.");
       return;
     }
@@ -64,7 +115,7 @@ function TutorPage() {
       await navigator.mediaDevices.getUserMedia({ audio: true });
       conversation.startSession({
         agentId,
-        dynamicVariables: { model_id: model.id, model_title: model.title },
+        dynamicVariables: { opening: openingLine(graphRef.current) },
       });
     } catch (err) {
       setStatus(`Could not start: ${err instanceof Error ? err.message : String(err)}. Check microphone permission.`);
@@ -114,37 +165,47 @@ function TutorPage() {
           Systems Thinking <em className="font-normal">Voice Tutor</em>
         </h1>
         <p className="mt-4 max-w-xl text-muted">
-          Choose a model, press Start conversation, and speak. You can interrupt the tutor at any
-          time. Press Escape to end.
+          Upload a Stella model, press Start conversation, and speak. You can interrupt the tutor at
+          any time. Press Escape to end.
         </p>
       </header>
 
       <section aria-label="Conversation" className="mt-10 rounded-2xl border border-line bg-surface p-5 shadow-card sm:p-7">
-        <label htmlFor="model" className="block text-sm font-semibold uppercase tracking-wider text-muted">
-          Model
+        <label htmlFor="upload" className="block text-sm font-semibold uppercase tracking-wider text-muted">
+          Your model
         </label>
-        <div className="relative mt-2">
-          <select
-            id="model"
-            className={`${field} appearance-none pr-12 font-serif text-xl`}
-            value={modelId}
-            disabled={running}
-            onChange={(e) => setModelId(e.target.value)}
-          >
-            {models.map((m) => (
-              <option key={m.id} value={m.id}>
-                {m.title}
-              </option>
-            ))}
-          </select>
-          <svg
-            aria-hidden="true"
-            viewBox="0 0 20 20"
-            className="pointer-events-none absolute right-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted"
-          >
-            <path d="M5 7.5l5 5 5-5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
+        <input
+          id="upload"
+          type="file"
+          accept=".stmx,.xml,text/xml,application/xml"
+          onChange={onUpload}
+          aria-describedby="uploadHelp"
+          className={`${field} mt-2 file:mr-4 file:rounded-lg file:border-0 file:bg-tint file:px-4 file:py-2 file:font-semibold file:text-fg`}
+        />
+        <p id="uploadHelp" className="mt-2 text-sm text-muted">
+          Choose a Stella file that ends in .stmx. It is read in your browser and is not sent anywhere.
+        </p>
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          <span className="text-sm text-muted">Or try an example:</span>
+          {[...MODELS].map(([id, m]) => (
+            <button
+              key={id}
+              type="button"
+              onClick={() => load(m)}
+              className="rounded-lg border border-fg px-3 py-1.5 text-sm font-semibold transition-colors hover:bg-fg hover:text-bg"
+            >
+              {m.data.title}
+            </button>
+          ))}
         </div>
+        <p aria-live="polite" className="mt-3 min-h-6 font-serif text-lg">
+          {loadNote}
+        </p>
+        {loadError && (
+          <p role="alert" className="mt-1 font-semibold text-danger">
+            {loadError}
+          </p>
+        )}
 
         <button
           type="button"

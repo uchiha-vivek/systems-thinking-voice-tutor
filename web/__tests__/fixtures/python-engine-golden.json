@@ -1,0 +1,1837 @@
+{
+ "deer-population": {
+  "behavior": {
+   "graphs": [
+    {
+     "key_insight": "Births stay ahead of deaths, so the reinforcing loop dominates and the population keeps growing.",
+     "series": [
+      {
+       "pattern": "rises steadily over the whole period",
+       "variable": "Deer population"
+      },
+      {
+       "pattern": "rises along with the population",
+       "variable": "Deer births per year"
+      },
+      {
+       "pattern": "also rises, but stays below births",
+       "variable": "Deer deaths per year"
+      }
+     ],
+     "title": "Population over time",
+     "x_axis": "Time in years, 0 to 50"
+    }
+   ]
+  },
+  "find_loops": {
+   "B": [
+    "B"
+   ],
+   "R": [
+    "R"
+   ],
+   "balancing": [
+    "B"
+   ],
+   "births loop": [
+    "R"
+   ],
+   "loop": [
+    "R",
+    "B"
+   ],
+   "reinforcing loop with deaths": [
+    "R"
+   ],
+   "something": [
+    "R",
+    "B"
+   ],
+   "the deaths loop": [
+    "B"
+   ],
+   "the reinforcing loop": [
+    "R"
+   ],
+   "walk me through the balancing loop": [
+    "B"
+   ]
+  },
+  "layout": {
+   "layout": "The deer population is in the center. Births are on the left with the reinforcing loop, marked R. Deaths are on the right with the balancing loop, marked B."
+  },
+  "loop": {
+   "B": {
+    "author_explanation": "More deer means more deaths each year, and more deaths reduce the population, which slows growth.",
+    "closes_back_to": "Deer population",
+    "id": "B",
+    "name": "deaths loop",
+    "steps_in_order": [
+     "When Deer population goes up, Deer deaths per year goes up.",
+     "When Deer deaths per year goes up, Deer population goes down."
+    ],
+    "type": "balancing",
+    "variables": [
+     "Deer population",
+     "Deer deaths per year"
+    ],
+    "what_it_means": "This is a balancing loop: it pushes back against change and moves the system toward a limit."
+   },
+   "R": {
+    "author_explanation": "More deer means more births each year, and more births mean even more deer, so the population grows.",
+    "closes_back_to": "Deer population",
+    "id": "R",
+    "name": "births loop",
+    "steps_in_order": [
+     "When Deer population goes up, Deer births per year goes up.",
+     "When Deer births per year goes up, Deer population goes up."
+    ],
+    "type": "reinforcing",
+    "variables": [
+     "Deer population",
+     "Deer births per year"
+    ],
+    "what_it_means": "This is a reinforcing loop: a change keeps amplifying itself, causing growth or collapse."
+   },
+   "balancing": {
+    "author_explanation": "More deer means more deaths each year, and more deaths reduce the population, which slows growth.",
+    "closes_back_to": "Deer population",
+    "id": "B",
+    "name": "deaths loop",
+    "steps_in_order": [
+     "When Deer population goes up, Deer deaths per year goes up.",
+     "When Deer deaths per year goes up, Deer population goes down."
+    ],
+    "type": "balancing",
+    "variables": [
+     "Deer population",
+     "Deer deaths per year"
+    ],
+    "what_it_means": "This is a balancing loop: it pushes back against change and moves the system toward a limit."
+   },
+   "births loop": {
+    "author_explanation": "More deer means more births each year, and more births mean even more deer, so the population grows.",
+    "closes_back_to": "Deer population",
+    "id": "R",
+    "name": "births loop",
+    "steps_in_order": [
+     "When Deer population goes up, Deer births per year goes up.",
+     "When Deer births per year goes up, Deer population goes up."
+    ],
+    "type": "reinforcing",
+    "variables": [
+     "Deer population",
+     "Deer births per year"
+    ],
+    "what_it_means": "This is a reinforcing loop: a change keeps amplifying itself, causing growth or collapse."
+   },
+   "loop": {
+    "ambiguous": true,
+    "ask_student_which_one": [
+     {
+      "id": "R",
+      "name": "births loop",
+      "type": "reinforcing",
+      "variables": [
+       "Deer population",
+       "Deer births per year"
+      ]
+     },
+     {
+      "id": "B",
+      "name": "deaths loop",
+      "type": "balancing",
+      "variables": [
+       "Deer population",
+       "Deer deaths per year"
+      ]
+     }
+    ]
+   },
+   "reinforcing loop with deaths": {
+    "author_explanation": "More deer means more births each year, and more births mean even more deer, so the population grows.",
+    "closes_back_to": "Deer population",
+    "id": "R",
+    "name": "births loop",
+    "steps_in_order": [
+     "When Deer population goes up, Deer births per year goes up.",
+     "When Deer births per year goes up, Deer population goes up."
+    ],
+    "type": "reinforcing",
+    "variables": [
+     "Deer population",
+     "Deer births per year"
+    ],
+    "what_it_means": "This is a reinforcing loop: a change keeps amplifying itself, causing growth or collapse."
+   },
+   "something": {
+    "ambiguous": true,
+    "ask_student_which_one": [
+     {
+      "id": "R",
+      "name": "births loop",
+      "type": "reinforcing",
+      "variables": [
+       "Deer population",
+       "Deer births per year"
+      ]
+     },
+     {
+      "id": "B",
+      "name": "deaths loop",
+      "type": "balancing",
+      "variables": [
+       "Deer population",
+       "Deer deaths per year"
+      ]
+     }
+    ]
+   },
+   "the deaths loop": {
+    "author_explanation": "More deer means more deaths each year, and more deaths reduce the population, which slows growth.",
+    "closes_back_to": "Deer population",
+    "id": "B",
+    "name": "deaths loop",
+    "steps_in_order": [
+     "When Deer population goes up, Deer deaths per year goes up.",
+     "When Deer deaths per year goes up, Deer population goes down."
+    ],
+    "type": "balancing",
+    "variables": [
+     "Deer population",
+     "Deer deaths per year"
+    ],
+    "what_it_means": "This is a balancing loop: it pushes back against change and moves the system toward a limit."
+   },
+   "the reinforcing loop": {
+    "author_explanation": "More deer means more births each year, and more births mean even more deer, so the population grows.",
+    "closes_back_to": "Deer population",
+    "id": "R",
+    "name": "births loop",
+    "steps_in_order": [
+     "When Deer population goes up, Deer births per year goes up.",
+     "When Deer births per year goes up, Deer population goes up."
+    ],
+    "type": "reinforcing",
+    "variables": [
+     "Deer population",
+     "Deer births per year"
+    ],
+    "what_it_means": "This is a reinforcing loop: a change keeps amplifying itself, causing growth or collapse."
+   },
+   "walk me through the balancing loop": {
+    "author_explanation": "More deer means more deaths each year, and more deaths reduce the population, which slows growth.",
+    "closes_back_to": "Deer population",
+    "id": "B",
+    "name": "deaths loop",
+    "steps_in_order": [
+     "When Deer population goes up, Deer deaths per year goes up.",
+     "When Deer deaths per year goes up, Deer population goes down."
+    ],
+    "type": "balancing",
+    "variables": [
+     "Deer population",
+     "Deer deaths per year"
+    ],
+    "what_it_means": "This is a balancing loop: it pushes back against change and moves the system toward a limit."
+   }
+  },
+  "loops": [
+   {
+    "edges": [
+     [
+      "deer_population",
+      "deer_births"
+     ],
+     [
+      "deer_births",
+      "deer_population"
+     ]
+    ],
+    "id": "R",
+    "name": "births loop",
+    "type": "R",
+    "variables": [
+     "deer_population",
+     "deer_births"
+    ]
+   },
+   {
+    "edges": [
+     [
+      "deer_population",
+      "deer_deaths"
+     ],
+     [
+      "deer_deaths",
+      "deer_population"
+     ]
+    ],
+    "id": "B",
+    "name": "deaths loop",
+    "type": "B",
+    "variables": [
+     "deer_population",
+     "deer_deaths"
+    ]
+   }
+  ],
+  "overview": {
+   "has_behavior_over_time_graph": true,
+   "key_variables": [
+    "Deer population",
+    "Deer births per year",
+    "Deer deaths per year"
+   ],
+   "loops": [
+    {
+     "id": "R",
+     "name": "births loop",
+     "type": "reinforcing",
+     "variables": [
+      "Deer population",
+      "Deer births per year"
+     ]
+    },
+    {
+     "id": "B",
+     "name": "deaths loop",
+     "type": "balancing",
+     "variables": [
+      "Deer population",
+      "Deer deaths per year"
+     ]
+    }
+   ],
+   "number_of_variables": 3,
+   "summary": "A deer population model with two feedback loops: births drive growth, and deaths limit it.",
+   "title": "Deer Population",
+   "verified_by_instructor": true
+  },
+  "path": {
+   "birth rate|deer population": {
+    "connected": true,
+    "paths": [
+     {
+      "chain": [
+       "Deer births per year",
+       "Deer population"
+      ],
+      "overall": "If Deer births per year goes up, Deer population goes up through this chain.",
+      "steps": [
+       "When Deer births per year goes up, Deer population goes up."
+      ]
+     }
+    ]
+   },
+   "births|deaths": {
+    "connected": true,
+    "paths": [
+     {
+      "chain": [
+       "Deer births per year",
+       "Deer population",
+       "Deer deaths per year"
+      ],
+      "overall": "If Deer births per year goes up, Deer deaths per year goes up through this chain.",
+      "steps": [
+       "When Deer births per year goes up, Deer population goes up.",
+       "When Deer population goes up, Deer deaths per year goes up."
+      ]
+     }
+    ]
+   },
+   "deaths|births": {
+    "connected": true,
+    "paths": [
+     {
+      "chain": [
+       "Deer deaths per year",
+       "Deer population",
+       "Deer births per year"
+      ],
+      "overall": "If Deer deaths per year goes up, Deer births per year goes down through this chain.",
+      "steps": [
+       "When Deer deaths per year goes up, Deer population goes down.",
+       "When Deer population goes up, Deer births per year goes up."
+      ]
+     }
+    ]
+   },
+   "deer|deer": {
+    "connected": true,
+    "paths": [
+     {
+      "chain": [
+       "Deer population"
+      ],
+      "overall": "If Deer population goes up, Deer population goes up through this chain.",
+      "steps": []
+     }
+    ]
+   },
+   "wolves|births": {
+    "ambiguous_or_missing": true,
+    "from_matches": [],
+    "to_matches": [
+     "Deer births per year"
+    ]
+   }
+  },
+  "resolve": {
+   "birth rate": [
+    "deer_births"
+   ],
+   "births": [
+    "deer_births"
+   ],
+   "dear deaths": [
+    "deer_deaths"
+   ],
+   "deaths": [
+    "deer_deaths"
+   ],
+   "deer": [
+    "deer_population"
+   ],
+   "deer birth": [
+    "deer_births"
+   ],
+   "deer population": [
+    "deer_population"
+   ],
+   "number of deer": [
+    "deer_population"
+   ],
+   "populaton": [
+    "deer_population"
+   ],
+   "wolves": []
+  },
+  "variable": {
+   "birth rate": {
+    "affected_by": [
+     {
+      "effect": "When Deer population goes up, Deer births per year goes up.",
+      "has_delay": false,
+      "variable": "Deer population"
+     }
+    ],
+    "affects": [
+     {
+      "effect": "When Deer births per year goes up, Deer population goes up.",
+      "has_delay": false,
+      "variable": "Deer population"
+     }
+    ],
+    "description": "How many deer are born each year. It flows into the population.",
+    "kind": "flow",
+    "part_of_loops": [
+     {
+      "id": "R",
+      "name": "births loop",
+      "type": "reinforcing",
+      "variables": [
+       "Deer population",
+       "Deer births per year"
+      ]
+     }
+    ],
+    "variable": "Deer births per year"
+   },
+   "births": {
+    "affected_by": [
+     {
+      "effect": "When Deer population goes up, Deer births per year goes up.",
+      "has_delay": false,
+      "variable": "Deer population"
+     }
+    ],
+    "affects": [
+     {
+      "effect": "When Deer births per year goes up, Deer population goes up.",
+      "has_delay": false,
+      "variable": "Deer population"
+     }
+    ],
+    "description": "How many deer are born each year. It flows into the population.",
+    "kind": "flow",
+    "part_of_loops": [
+     {
+      "id": "R",
+      "name": "births loop",
+      "type": "reinforcing",
+      "variables": [
+       "Deer population",
+       "Deer births per year"
+      ]
+     }
+    ],
+    "variable": "Deer births per year"
+   },
+   "dear deaths": {
+    "affected_by": [
+     {
+      "effect": "When Deer population goes up, Deer deaths per year goes up.",
+      "has_delay": false,
+      "variable": "Deer population"
+     }
+    ],
+    "affects": [
+     {
+      "effect": "When Deer deaths per year goes up, Deer population goes down.",
+      "has_delay": false,
+      "variable": "Deer population"
+     }
+    ],
+    "description": "How many deer die each year. It flows out of the population.",
+    "kind": "flow",
+    "part_of_loops": [
+     {
+      "id": "B",
+      "name": "deaths loop",
+      "type": "balancing",
+      "variables": [
+       "Deer population",
+       "Deer deaths per year"
+      ]
+     }
+    ],
+    "variable": "Deer deaths per year"
+   },
+   "deaths": {
+    "affected_by": [
+     {
+      "effect": "When Deer population goes up, Deer deaths per year goes up.",
+      "has_delay": false,
+      "variable": "Deer population"
+     }
+    ],
+    "affects": [
+     {
+      "effect": "When Deer deaths per year goes up, Deer population goes down.",
+      "has_delay": false,
+      "variable": "Deer population"
+     }
+    ],
+    "description": "How many deer die each year. It flows out of the population.",
+    "kind": "flow",
+    "part_of_loops": [
+     {
+      "id": "B",
+      "name": "deaths loop",
+      "type": "balancing",
+      "variables": [
+       "Deer population",
+       "Deer deaths per year"
+      ]
+     }
+    ],
+    "variable": "Deer deaths per year"
+   },
+   "deer": {
+    "affected_by": [
+     {
+      "effect": "When Deer births per year goes up, Deer population goes up.",
+      "has_delay": false,
+      "variable": "Deer births per year"
+     },
+     {
+      "effect": "When Deer deaths per year goes up, Deer population goes down.",
+      "has_delay": false,
+      "variable": "Deer deaths per year"
+     }
+    ],
+    "affects": [
+     {
+      "effect": "When Deer population goes up, Deer births per year goes up.",
+      "has_delay": false,
+      "variable": "Deer births per year"
+     },
+     {
+      "effect": "When Deer population goes up, Deer deaths per year goes up.",
+      "has_delay": false,
+      "variable": "Deer deaths per year"
+     }
+    ],
+    "description": "How many deer there are. It is a stock: it accumulates births and loses deaths.",
+    "kind": "stock",
+    "part_of_loops": [
+     {
+      "id": "R",
+      "name": "births loop",
+      "type": "reinforcing",
+      "variables": [
+       "Deer population",
+       "Deer births per year"
+      ]
+     },
+     {
+      "id": "B",
+      "name": "deaths loop",
+      "type": "balancing",
+      "variables": [
+       "Deer population",
+       "Deer deaths per year"
+      ]
+     }
+    ],
+    "variable": "Deer population"
+   },
+   "deer birth": {
+    "affected_by": [
+     {
+      "effect": "When Deer population goes up, Deer births per year goes up.",
+      "has_delay": false,
+      "variable": "Deer population"
+     }
+    ],
+    "affects": [
+     {
+      "effect": "When Deer births per year goes up, Deer population goes up.",
+      "has_delay": false,
+      "variable": "Deer population"
+     }
+    ],
+    "description": "How many deer are born each year. It flows into the population.",
+    "kind": "flow",
+    "part_of_loops": [
+     {
+      "id": "R",
+      "name": "births loop",
+      "type": "reinforcing",
+      "variables": [
+       "Deer population",
+       "Deer births per year"
+      ]
+     }
+    ],
+    "variable": "Deer births per year"
+   },
+   "deer population": {
+    "affected_by": [
+     {
+      "effect": "When Deer births per year goes up, Deer population goes up.",
+      "has_delay": false,
+      "variable": "Deer births per year"
+     },
+     {
+      "effect": "When Deer deaths per year goes up, Deer population goes down.",
+      "has_delay": false,
+      "variable": "Deer deaths per year"
+     }
+    ],
+    "affects": [
+     {
+      "effect": "When Deer population goes up, Deer births per year goes up.",
+      "has_delay": false,
+      "variable": "Deer births per year"
+     },
+     {
+      "effect": "When Deer population goes up, Deer deaths per year goes up.",
+      "has_delay": false,
+      "variable": "Deer deaths per year"
+     }
+    ],
+    "description": "How many deer there are. It is a stock: it accumulates births and loses deaths.",
+    "kind": "stock",
+    "part_of_loops": [
+     {
+      "id": "R",
+      "name": "births loop",
+      "type": "reinforcing",
+      "variables": [
+       "Deer population",
+       "Deer births per year"
+      ]
+     },
+     {
+      "id": "B",
+      "name": "deaths loop",
+      "type": "balancing",
+      "variables": [
+       "Deer population",
+       "Deer deaths per year"
+      ]
+     }
+    ],
+    "variable": "Deer population"
+   },
+   "number of deer": {
+    "affected_by": [
+     {
+      "effect": "When Deer births per year goes up, Deer population goes up.",
+      "has_delay": false,
+      "variable": "Deer births per year"
+     },
+     {
+      "effect": "When Deer deaths per year goes up, Deer population goes down.",
+      "has_delay": false,
+      "variable": "Deer deaths per year"
+     }
+    ],
+    "affects": [
+     {
+      "effect": "When Deer population goes up, Deer births per year goes up.",
+      "has_delay": false,
+      "variable": "Deer births per year"
+     },
+     {
+      "effect": "When Deer population goes up, Deer deaths per year goes up.",
+      "has_delay": false,
+      "variable": "Deer deaths per year"
+     }
+    ],
+    "description": "How many deer there are. It is a stock: it accumulates births and loses deaths.",
+    "kind": "stock",
+    "part_of_loops": [
+     {
+      "id": "R",
+      "name": "births loop",
+      "type": "reinforcing",
+      "variables": [
+       "Deer population",
+       "Deer births per year"
+      ]
+     },
+     {
+      "id": "B",
+      "name": "deaths loop",
+      "type": "balancing",
+      "variables": [
+       "Deer population",
+       "Deer deaths per year"
+      ]
+     }
+    ],
+    "variable": "Deer population"
+   },
+   "populaton": {
+    "affected_by": [
+     {
+      "effect": "When Deer births per year goes up, Deer population goes up.",
+      "has_delay": false,
+      "variable": "Deer births per year"
+     },
+     {
+      "effect": "When Deer deaths per year goes up, Deer population goes down.",
+      "has_delay": false,
+      "variable": "Deer deaths per year"
+     }
+    ],
+    "affects": [
+     {
+      "effect": "When Deer population goes up, Deer births per year goes up.",
+      "has_delay": false,
+      "variable": "Deer births per year"
+     },
+     {
+      "effect": "When Deer population goes up, Deer deaths per year goes up.",
+      "has_delay": false,
+      "variable": "Deer deaths per year"
+     }
+    ],
+    "description": "How many deer there are. It is a stock: it accumulates births and loses deaths.",
+    "kind": "stock",
+    "part_of_loops": [
+     {
+      "id": "R",
+      "name": "births loop",
+      "type": "reinforcing",
+      "variables": [
+       "Deer population",
+       "Deer births per year"
+      ]
+     },
+     {
+      "id": "B",
+      "name": "deaths loop",
+      "type": "balancing",
+      "variables": [
+       "Deer population",
+       "Deer deaths per year"
+      ]
+     }
+    ],
+    "variable": "Deer population"
+   },
+   "wolves": {
+    "available_variables": [
+     "Deer population",
+     "Deer births per year",
+     "Deer deaths per year"
+    ],
+    "error": "No variable matches 'wolves'."
+   }
+  }
+ },
+ "water-supply": {
+  "behavior": {
+   "graphs": [
+    {
+     "key_insight": "Sales overshoot and decline while capacity and quality level off: the balancing loops eventually dominate.",
+     "series": [
+      {
+       "pattern": "rises, peaks around the middle, then declines",
+       "variable": "Sales"
+      },
+      {
+       "pattern": "rises, then levels off",
+       "variable": "Water quality"
+      },
+      {
+       "pattern": "rises, then levels off below sales",
+       "variable": "Informal supply capacity"
+      }
+     ],
+     "title": "Informal market over time"
+    },
+    {
+     "key_insight": "Delayed rehabilitation makes efficiency oscillate instead of settling.",
+     "series": [
+      {
+       "pattern": "goes up and down in waves",
+       "variable": "Infrastructure efficiency"
+      },
+      {
+       "pattern": "also goes up and down, out of step with efficiency",
+       "variable": "Need for rehabilitation"
+      }
+     ],
+     "title": "Formal infrastructure over time"
+    }
+   ]
+  },
+  "find_loops": {
+   "B four point one": [
+    "B4.1"
+   ],
+   "B three point one": [
+    "B3.1"
+   ],
+   "B2.1": [
+    "B2.1"
+   ],
+   "R3.1": [
+    "R3.1"
+   ],
+   "b 4.1": [
+    "B4.1"
+   ],
+   "balancing loop": [
+    "B4.1",
+    "B3.1",
+    "B3.2",
+    "B2.1"
+   ],
+   "informal demand loop": [
+    "R3.1",
+    "B3.1",
+    "B3.2",
+    "B2.1"
+   ],
+   "loop about income": [
+    "B3.1"
+   ],
+   "loop b3.2": [
+    "B3.2"
+   ],
+   "nonsense": [
+    "B4.1",
+    "R3.1",
+    "B3.1",
+    "B3.2",
+    "B2.1"
+   ],
+   "the reinforcing loop": [
+    "R3.1"
+   ]
+  },
+  "layout": {
+   "layout": "No layout information was recorded for this diagram."
+  },
+  "loop": {
+   "B four point one": {
+    "author_explanation": null,
+    "closes_back_to": "Water shortage",
+    "id": "B4.1",
+    "name": "infrastructure rehabilitation",
+    "steps_in_order": [
+     "When Water shortage goes up, Need for rehabilitation goes up.",
+     "When Need for rehabilitation goes up, Rehabilitation goes up. This takes time (delay).",
+     "When Rehabilitation goes up, Formal infrastructure aging goes down.",
+     "When Formal infrastructure aging goes up, Infrastructure capacity goes down.",
+     "When Infrastructure capacity goes up, Formal supply goes up.",
+     "When Formal supply goes up, Water shortage goes down."
+    ],
+    "type": "balancing",
+    "variables": [
+     "Water shortage",
+     "Need for rehabilitation",
+     "Rehabilitation",
+     "Formal infrastructure aging",
+     "Infrastructure capacity",
+     "Formal supply"
+    ],
+    "what_it_means": "This is a balancing loop: it pushes back against change and moves the system toward a limit."
+   },
+   "B three point one": {
+    "author_explanation": null,
+    "closes_back_to": "Informal demand",
+    "id": "B3.1",
+    "name": "household budget",
+    "steps_in_order": [
+     "When Informal demand goes up, Total expenditure on water supply per household goes up.",
+     "When Total expenditure on water supply per household goes up, Household income goes down.",
+     "When Household income goes up, Informal demand goes up."
+    ],
+    "type": "balancing",
+    "variables": [
+     "Informal demand",
+     "Total expenditure on water supply per household",
+     "Household income"
+    ],
+    "what_it_means": "This is a balancing loop: it pushes back against change and moves the system toward a limit."
+   },
+   "B2.1": {
+    "author_explanation": null,
+    "closes_back_to": "Water shortage",
+    "id": "B2.1",
+    "name": "demand shift",
+    "steps_in_order": [
+     "When Water shortage goes up, Informal demand goes up.",
+     "When Informal demand goes up, Formal demand goes down.",
+     "When Formal demand goes up, Water shortage goes up."
+    ],
+    "type": "balancing",
+    "variables": [
+     "Water shortage",
+     "Informal demand",
+     "Formal demand"
+    ],
+    "what_it_means": "This is a balancing loop: it pushes back against change and moves the system toward a limit."
+   },
+   "R3.1": {
+    "author_explanation": null,
+    "closes_back_to": "Informal demand",
+    "id": "R3.1",
+    "name": "informal market growth",
+    "steps_in_order": [
+     "When Informal demand goes up, Informal supply goes up.",
+     "When Informal supply goes up, Informal demand goes up."
+    ],
+    "type": "reinforcing",
+    "variables": [
+     "Informal demand",
+     "Informal supply"
+    ],
+    "what_it_means": "This is a reinforcing loop: a change keeps amplifying itself, causing growth or collapse."
+   },
+   "b 4.1": {
+    "author_explanation": null,
+    "closes_back_to": "Water shortage",
+    "id": "B4.1",
+    "name": "infrastructure rehabilitation",
+    "steps_in_order": [
+     "When Water shortage goes up, Need for rehabilitation goes up.",
+     "When Need for rehabilitation goes up, Rehabilitation goes up. This takes time (delay).",
+     "When Rehabilitation goes up, Formal infrastructure aging goes down.",
+     "When Formal infrastructure aging goes up, Infrastructure capacity goes down.",
+     "When Infrastructure capacity goes up, Formal supply goes up.",
+     "When Formal supply goes up, Water shortage goes down."
+    ],
+    "type": "balancing",
+    "variables": [
+     "Water shortage",
+     "Need for rehabilitation",
+     "Rehabilitation",
+     "Formal infrastructure aging",
+     "Infrastructure capacity",
+     "Formal supply"
+    ],
+    "what_it_means": "This is a balancing loop: it pushes back against change and moves the system toward a limit."
+   },
+   "balancing loop": {
+    "ambiguous": true,
+    "ask_student_which_one": [
+     {
+      "id": "B4.1",
+      "name": "infrastructure rehabilitation",
+      "type": "balancing",
+      "variables": [
+       "Water shortage",
+       "Need for rehabilitation",
+       "Rehabilitation",
+       "Formal infrastructure aging",
+       "Infrastructure capacity",
+       "Formal supply"
+      ]
+     },
+     {
+      "id": "B3.1",
+      "name": "household budget",
+      "type": "balancing",
+      "variables": [
+       "Informal demand",
+       "Total expenditure on water supply per household",
+       "Household income"
+      ]
+     },
+     {
+      "id": "B3.2",
+      "name": "service quality",
+      "type": "balancing",
+      "variables": [
+       "Informal demand",
+       "Pressure on informal supplier",
+       "Informal supply service quality",
+       "Consumer satisfaction"
+      ]
+     },
+     {
+      "id": "B2.1",
+      "name": "demand shift",
+      "type": "balancing",
+      "variables": [
+       "Water shortage",
+       "Informal demand",
+       "Formal demand"
+      ]
+     }
+    ]
+   },
+   "informal demand loop": {
+    "ambiguous": true,
+    "ask_student_which_one": [
+     {
+      "id": "R3.1",
+      "name": "informal market growth",
+      "type": "reinforcing",
+      "variables": [
+       "Informal demand",
+       "Informal supply"
+      ]
+     },
+     {
+      "id": "B3.1",
+      "name": "household budget",
+      "type": "balancing",
+      "variables": [
+       "Informal demand",
+       "Total expenditure on water supply per household",
+       "Household income"
+      ]
+     },
+     {
+      "id": "B3.2",
+      "name": "service quality",
+      "type": "balancing",
+      "variables": [
+       "Informal demand",
+       "Pressure on informal supplier",
+       "Informal supply service quality",
+       "Consumer satisfaction"
+      ]
+     },
+     {
+      "id": "B2.1",
+      "name": "demand shift",
+      "type": "balancing",
+      "variables": [
+       "Water shortage",
+       "Informal demand",
+       "Formal demand"
+      ]
+     }
+    ]
+   },
+   "loop about income": {
+    "author_explanation": null,
+    "closes_back_to": "Informal demand",
+    "id": "B3.1",
+    "name": "household budget",
+    "steps_in_order": [
+     "When Informal demand goes up, Total expenditure on water supply per household goes up.",
+     "When Total expenditure on water supply per household goes up, Household income goes down.",
+     "When Household income goes up, Informal demand goes up."
+    ],
+    "type": "balancing",
+    "variables": [
+     "Informal demand",
+     "Total expenditure on water supply per household",
+     "Household income"
+    ],
+    "what_it_means": "This is a balancing loop: it pushes back against change and moves the system toward a limit."
+   },
+   "loop b3.2": {
+    "author_explanation": null,
+    "closes_back_to": "Informal demand",
+    "id": "B3.2",
+    "name": "service quality",
+    "steps_in_order": [
+     "When Informal demand goes up, Pressure on informal supplier goes up.",
+     "When Pressure on informal supplier goes up, Informal supply service quality goes down.",
+     "When Informal supply service quality goes up, Consumer satisfaction goes up.",
+     "When Consumer satisfaction goes up, Informal demand goes up."
+    ],
+    "type": "balancing",
+    "variables": [
+     "Informal demand",
+     "Pressure on informal supplier",
+     "Informal supply service quality",
+     "Consumer satisfaction"
+    ],
+    "what_it_means": "This is a balancing loop: it pushes back against change and moves the system toward a limit."
+   },
+   "nonsense": {
+    "ambiguous": true,
+    "ask_student_which_one": [
+     {
+      "id": "B4.1",
+      "name": "infrastructure rehabilitation",
+      "type": "balancing",
+      "variables": [
+       "Water shortage",
+       "Need for rehabilitation",
+       "Rehabilitation",
+       "Formal infrastructure aging",
+       "Infrastructure capacity",
+       "Formal supply"
+      ]
+     },
+     {
+      "id": "R3.1",
+      "name": "informal market growth",
+      "type": "reinforcing",
+      "variables": [
+       "Informal demand",
+       "Informal supply"
+      ]
+     },
+     {
+      "id": "B3.1",
+      "name": "household budget",
+      "type": "balancing",
+      "variables": [
+       "Informal demand",
+       "Total expenditure on water supply per household",
+       "Household income"
+      ]
+     },
+     {
+      "id": "B3.2",
+      "name": "service quality",
+      "type": "balancing",
+      "variables": [
+       "Informal demand",
+       "Pressure on informal supplier",
+       "Informal supply service quality",
+       "Consumer satisfaction"
+      ]
+     },
+     {
+      "id": "B2.1",
+      "name": "demand shift",
+      "type": "balancing",
+      "variables": [
+       "Water shortage",
+       "Informal demand",
+       "Formal demand"
+      ]
+     }
+    ]
+   },
+   "the reinforcing loop": {
+    "author_explanation": null,
+    "closes_back_to": "Informal demand",
+    "id": "R3.1",
+    "name": "informal market growth",
+    "steps_in_order": [
+     "When Informal demand goes up, Informal supply goes up.",
+     "When Informal supply goes up, Informal demand goes up."
+    ],
+    "type": "reinforcing",
+    "variables": [
+     "Informal demand",
+     "Informal supply"
+    ],
+    "what_it_means": "This is a reinforcing loop: a change keeps amplifying itself, causing growth or collapse."
+   }
+  },
+  "loops": [
+   {
+    "edges": [
+     [
+      "water_shortage",
+      "need_for_rehab"
+     ],
+     [
+      "need_for_rehab",
+      "rehabilitation"
+     ],
+     [
+      "rehabilitation",
+      "infrastructure_aging"
+     ],
+     [
+      "infrastructure_aging",
+      "infrastructure_capacity"
+     ],
+     [
+      "infrastructure_capacity",
+      "formal_supply"
+     ],
+     [
+      "formal_supply",
+      "water_shortage"
+     ]
+    ],
+    "id": "B4.1",
+    "name": "infrastructure rehabilitation",
+    "type": "B",
+    "variables": [
+     "water_shortage",
+     "need_for_rehab",
+     "rehabilitation",
+     "infrastructure_aging",
+     "infrastructure_capacity",
+     "formal_supply"
+    ]
+   },
+   {
+    "edges": [
+     [
+      "informal_demand",
+      "informal_supply"
+     ],
+     [
+      "informal_supply",
+      "informal_demand"
+     ]
+    ],
+    "id": "R3.1",
+    "name": "informal market growth",
+    "type": "R",
+    "variables": [
+     "informal_demand",
+     "informal_supply"
+    ]
+   },
+   {
+    "edges": [
+     [
+      "informal_demand",
+      "total_expenditure"
+     ],
+     [
+      "total_expenditure",
+      "hh_income"
+     ],
+     [
+      "hh_income",
+      "informal_demand"
+     ]
+    ],
+    "id": "B3.1",
+    "name": "household budget",
+    "type": "B",
+    "variables": [
+     "informal_demand",
+     "total_expenditure",
+     "hh_income"
+    ]
+   },
+   {
+    "edges": [
+     [
+      "informal_demand",
+      "pressure_on_supplier"
+     ],
+     [
+      "pressure_on_supplier",
+      "service_quality"
+     ],
+     [
+      "service_quality",
+      "consumer_satisfaction"
+     ],
+     [
+      "consumer_satisfaction",
+      "informal_demand"
+     ]
+    ],
+    "id": "B3.2",
+    "name": "service quality",
+    "type": "B",
+    "variables": [
+     "informal_demand",
+     "pressure_on_supplier",
+     "service_quality",
+     "consumer_satisfaction"
+    ]
+   },
+   {
+    "edges": [
+     [
+      "water_shortage",
+      "informal_demand"
+     ],
+     [
+      "informal_demand",
+      "formal_demand"
+     ],
+     [
+      "formal_demand",
+      "water_shortage"
+     ]
+    ],
+    "id": "B2.1",
+    "name": "demand shift",
+    "type": "B",
+    "variables": [
+     "water_shortage",
+     "informal_demand",
+     "formal_demand"
+    ]
+   }
+  ],
+  "overview": {
+   "has_behavior_over_time_graph": true,
+   "key_variables": [
+    "Informal demand",
+    "Water shortage",
+    "Informal supply"
+   ],
+   "loops": [
+    {
+     "id": "B4.1",
+     "name": "infrastructure rehabilitation",
+     "type": "balancing",
+     "variables": [
+      "Water shortage",
+      "Need for rehabilitation",
+      "Rehabilitation",
+      "Formal infrastructure aging",
+      "Infrastructure capacity",
+      "Formal supply"
+     ]
+    },
+    {
+     "id": "R3.1",
+     "name": "informal market growth",
+     "type": "reinforcing",
+     "variables": [
+      "Informal demand",
+      "Informal supply"
+     ]
+    },
+    {
+     "id": "B3.1",
+     "name": "household budget",
+     "type": "balancing",
+     "variables": [
+      "Informal demand",
+      "Total expenditure on water supply per household",
+      "Household income"
+     ]
+    },
+    {
+     "id": "B3.2",
+     "name": "service quality",
+     "type": "balancing",
+     "variables": [
+      "Informal demand",
+      "Pressure on informal supplier",
+      "Informal supply service quality",
+      "Consumer satisfaction"
+     ]
+    },
+    {
+     "id": "B2.1",
+     "name": "demand shift",
+     "type": "balancing",
+     "variables": [
+      "Water shortage",
+      "Informal demand",
+      "Formal demand"
+     ]
+    }
+   ],
+   "number_of_variables": 16,
+   "summary": "Two connected systems: an informal water market with one growth loop and two limiting loops, and a formal utility whose aging infrastructure causes shortages.",
+   "title": "Formal and Informal Water Supply",
+   "verified_by_instructor": false
+  },
+  "path": {
+   "demand|income": {
+    "ambiguous_or_missing": true,
+    "from_matches": [
+     "Informal demand",
+     "Formal demand"
+    ],
+    "to_matches": [
+     "Household income"
+    ]
+   },
+   "formal demand|hh income": {
+    "connected": true,
+    "paths": [
+     {
+      "chain": [
+       "Formal demand",
+       "Water shortage",
+       "Informal demand",
+       "Total expenditure on water supply per household",
+       "Household income"
+      ],
+      "overall": "If Formal demand goes up, Household income goes down through this chain.",
+      "steps": [
+       "When Formal demand goes up, Water shortage goes up.",
+       "When Water shortage goes up, Informal demand goes up.",
+       "When Informal demand goes up, Total expenditure on water supply per household goes up.",
+       "When Total expenditure on water supply per household goes up, Household income goes down."
+      ]
+     }
+    ]
+   },
+   "household income|population": {
+    "connected": false,
+    "message": "Household income does not affect Population in this model."
+   },
+   "informal demand|household income": {
+    "connected": true,
+    "paths": [
+     {
+      "chain": [
+       "Informal demand",
+       "Total expenditure on water supply per household",
+       "Household income"
+      ],
+      "overall": "If Informal demand goes up, Household income goes down through this chain.",
+      "steps": [
+       "When Informal demand goes up, Total expenditure on water supply per household goes up.",
+       "When Total expenditure on water supply per household goes up, Household income goes down."
+      ]
+     }
+    ]
+   },
+   "population|informal demand": {
+    "connected": true,
+    "paths": [
+     {
+      "chain": [
+       "Population",
+       "Formal demand",
+       "Water shortage",
+       "Informal demand"
+      ],
+      "overall": "If Population goes up, Informal demand goes up through this chain.",
+      "steps": [
+       "When Population goes up, Formal demand goes up.",
+       "When Formal demand goes up, Water shortage goes up.",
+       "When Water shortage goes up, Informal demand goes up."
+      ]
+     }
+    ]
+   }
+  },
+  "resolve": {
+   "HH income": [
+    "hh_income"
+   ],
+   "demand": [
+    "informal_demand",
+    "formal_demand"
+   ],
+   "expenditure": [
+    "total_expenditure"
+   ],
+   "formal demand": [
+    "formal_demand"
+   ],
+   "hh incom": [
+    "hh_income"
+   ],
+   "household income": [
+    "hh_income"
+   ],
+   "income": [
+    "hh_income"
+   ],
+   "informal": [
+    "informal_supply",
+    "informal_demand",
+    "pressure_on_supplier",
+    "service_quality"
+   ],
+   "informal demand": [
+    "informal_demand"
+   ],
+   "population": [
+    "population"
+   ],
+   "rehab": [
+    "rehabilitation"
+   ],
+   "water": [
+    "total_expenditure",
+    "water_shortage"
+   ]
+  },
+  "variable": {
+   "HH income": {
+    "affected_by": [
+     {
+      "effect": "When Total expenditure on water supply per household goes up, Household income goes down.",
+      "has_delay": false,
+      "variable": "Total expenditure on water supply per household"
+     }
+    ],
+    "affects": [
+     {
+      "effect": "When Household income goes up, Informal demand goes up.",
+      "has_delay": false,
+      "variable": "Informal demand"
+     }
+    ],
+    "description": null,
+    "kind": "variable",
+    "part_of_loops": [
+     {
+      "id": "B3.1",
+      "name": "household budget",
+      "type": "balancing",
+      "variables": [
+       "Informal demand",
+       "Total expenditure on water supply per household",
+       "Household income"
+      ]
+     }
+    ],
+    "variable": "Household income"
+   },
+   "demand": {
+    "ambiguous": true,
+    "ask_student_which_one": [
+     "Informal demand",
+     "Formal demand"
+    ]
+   },
+   "expenditure": {
+    "affected_by": [
+     {
+      "effect": "When Informal demand goes up, Total expenditure on water supply per household goes up.",
+      "has_delay": false,
+      "variable": "Informal demand"
+     }
+    ],
+    "affects": [
+     {
+      "effect": "When Total expenditure on water supply per household goes up, Household income goes down.",
+      "has_delay": false,
+      "variable": "Household income"
+     }
+    ],
+    "description": null,
+    "kind": "variable",
+    "part_of_loops": [
+     {
+      "id": "B3.1",
+      "name": "household budget",
+      "type": "balancing",
+      "variables": [
+       "Informal demand",
+       "Total expenditure on water supply per household",
+       "Household income"
+      ]
+     }
+    ],
+    "variable": "Total expenditure on water supply per household"
+   },
+   "formal demand": {
+    "affected_by": [
+     {
+      "effect": "When Informal demand goes up, Formal demand goes down.",
+      "has_delay": false,
+      "variable": "Informal demand"
+     },
+     {
+      "effect": "When Population goes up, Formal demand goes up.",
+      "has_delay": false,
+      "variable": "Population"
+     }
+    ],
+    "affects": [
+     {
+      "effect": "When Formal demand goes up, Water shortage goes up.",
+      "has_delay": false,
+      "variable": "Water shortage"
+     }
+    ],
+    "description": null,
+    "kind": "variable",
+    "part_of_loops": [
+     {
+      "id": "B2.1",
+      "name": "demand shift",
+      "type": "balancing",
+      "variables": [
+       "Water shortage",
+       "Informal demand",
+       "Formal demand"
+      ]
+     }
+    ],
+    "variable": "Formal demand"
+   },
+   "hh incom": {
+    "affected_by": [
+     {
+      "effect": "When Total expenditure on water supply per household goes up, Household income goes down.",
+      "has_delay": false,
+      "variable": "Total expenditure on water supply per household"
+     }
+    ],
+    "affects": [
+     {
+      "effect": "When Household income goes up, Informal demand goes up.",
+      "has_delay": false,
+      "variable": "Informal demand"
+     }
+    ],
+    "description": null,
+    "kind": "variable",
+    "part_of_loops": [
+     {
+      "id": "B3.1",
+      "name": "household budget",
+      "type": "balancing",
+      "variables": [
+       "Informal demand",
+       "Total expenditure on water supply per household",
+       "Household income"
+      ]
+     }
+    ],
+    "variable": "Household income"
+   },
+   "household income": {
+    "affected_by": [
+     {
+      "effect": "When Total expenditure on water supply per household goes up, Household income goes down.",
+      "has_delay": false,
+      "variable": "Total expenditure on water supply per household"
+     }
+    ],
+    "affects": [
+     {
+      "effect": "When Household income goes up, Informal demand goes up.",
+      "has_delay": false,
+      "variable": "Informal demand"
+     }
+    ],
+    "description": null,
+    "kind": "variable",
+    "part_of_loops": [
+     {
+      "id": "B3.1",
+      "name": "household budget",
+      "type": "balancing",
+      "variables": [
+       "Informal demand",
+       "Total expenditure on water supply per household",
+       "Household income"
+      ]
+     }
+    ],
+    "variable": "Household income"
+   },
+   "income": {
+    "affected_by": [
+     {
+      "effect": "When Total expenditure on water supply per household goes up, Household income goes down.",
+      "has_delay": false,
+      "variable": "Total expenditure on water supply per household"
+     }
+    ],
+    "affects": [
+     {
+      "effect": "When Household income goes up, Informal demand goes up.",
+      "has_delay": false,
+      "variable": "Informal demand"
+     }
+    ],
+    "description": null,
+    "kind": "variable",
+    "part_of_loops": [
+     {
+      "id": "B3.1",
+      "name": "household budget",
+      "type": "balancing",
+      "variables": [
+       "Informal demand",
+       "Total expenditure on water supply per household",
+       "Household income"
+      ]
+     }
+    ],
+    "variable": "Household income"
+   },
+   "informal": {
+    "ambiguous": true,
+    "ask_student_which_one": [
+     "Informal supply",
+     "Informal demand",
+     "Pressure on informal supplier",
+     "Informal supply service quality"
+    ]
+   },
+   "informal demand": {
+    "affected_by": [
+     {
+      "effect": "When Informal supply goes up, Informal demand goes up.",
+      "has_delay": false,
+      "variable": "Informal supply"
+     },
+     {
+      "effect": "When Household income goes up, Informal demand goes up.",
+      "has_delay": false,
+      "variable": "Household income"
+     },
+     {
+      "effect": "When Consumer satisfaction goes up, Informal demand goes up.",
+      "has_delay": false,
+      "variable": "Consumer satisfaction"
+     },
+     {
+      "effect": "When Water shortage goes up, Informal demand goes up.",
+      "has_delay": false,
+      "variable": "Water shortage"
+     }
+    ],
+    "affects": [
+     {
+      "effect": "When Informal demand goes up, Informal supply goes up.",
+      "has_delay": false,
+      "variable": "Informal supply"
+     },
+     {
+      "effect": "When Informal demand goes up, Total expenditure on water supply per household goes up.",
+      "has_delay": false,
+      "variable": "Total expenditure on water supply per household"
+     },
+     {
+      "effect": "When Informal demand goes up, Pressure on informal supplier goes up.",
+      "has_delay": false,
+      "variable": "Pressure on informal supplier"
+     },
+     {
+      "effect": "When Informal demand goes up, Formal demand goes down.",
+      "has_delay": false,
+      "variable": "Formal demand"
+     }
+    ],
+    "description": null,
+    "kind": "variable",
+    "part_of_loops": [
+     {
+      "id": "R3.1",
+      "name": "informal market growth",
+      "type": "reinforcing",
+      "variables": [
+       "Informal demand",
+       "Informal supply"
+      ]
+     },
+     {
+      "id": "B3.1",
+      "name": "household budget",
+      "type": "balancing",
+      "variables": [
+       "Informal demand",
+       "Total expenditure on water supply per household",
+       "Household income"
+      ]
+     },
+     {
+      "id": "B3.2",
+      "name": "service quality",
+      "type": "balancing",
+      "variables": [
+       "Informal demand",
+       "Pressure on informal supplier",
+       "Informal supply service quality",
+       "Consumer satisfaction"
+      ]
+     },
+     {
+      "id": "B2.1",
+      "name": "demand shift",
+      "type": "balancing",
+      "variables": [
+       "Water shortage",
+       "Informal demand",
+       "Formal demand"
+      ]
+     }
+    ],
+    "variable": "Informal demand"
+   },
+   "population": {
+    "affected_by": [],
+    "affects": [
+     {
+      "effect": "When Population goes up, Formal demand goes up.",
+      "has_delay": false,
+      "variable": "Formal demand"
+     }
+    ],
+    "description": null,
+    "kind": "exogenous",
+    "part_of_loops": [],
+    "variable": "Population"
+   },
+   "rehab": {
+    "affected_by": [
+     {
+      "effect": "When Need for rehabilitation goes up, Rehabilitation goes up.",
+      "has_delay": true,
+      "variable": "Need for rehabilitation"
+     }
+    ],
+    "affects": [
+     {
+      "effect": "When Rehabilitation goes up, Formal infrastructure aging goes down.",
+      "has_delay": false,
+      "variable": "Formal infrastructure aging"
+     }
+    ],
+    "description": null,
+    "kind": "variable",
+    "part_of_loops": [
+     {
+      "id": "B4.1",
+      "name": "infrastructure rehabilitation",
+      "type": "balancing",
+      "variables": [
+       "Water shortage",
+       "Need for rehabilitation",
+       "Rehabilitation",
+       "Formal infrastructure aging",
+       "Infrastructure capacity",
+       "Formal supply"
+      ]
+     }
+    ],
+    "variable": "Rehabilitation"
+   },
+   "water": {
+    "ambiguous": true,
+    "ask_student_which_one": [
+     "Total expenditure on water supply per household",
+     "Water shortage"
+    ]
+   }
+  }
+ }
+}

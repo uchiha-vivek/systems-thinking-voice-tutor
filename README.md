@@ -3,151 +3,108 @@
 An accessible voice tutor that explains Systems Thinking diagrams (causal loop diagrams,
 stock-and-flow diagrams, behavior-over-time graphs) to blind and visually impaired students.
 
-A student picks a diagram, presses **Start conversation** and talks: "Give me an overview",
+A student uploads their model (a Stella `.stmx` file), presses **Start conversation** and talks: "Give me an overview",
 "Walk me through the reinforcing loop", "If births go up, what happens to deaths?". An
 ElevenLabs voice agent answers, but every variable, link, polarity and loop it mentions comes
 from a graph engine on our server, never from the AI's own guess. A blind student can't check
 the answer against the picture, so a wrong "+" or "−" would teach the wrong thing.
 
 ```
-Browser (web/, Next.js on :3000)  ──/api/*──▶  FastAPI (backend/, :8000)  ◀──/tools/*──  ElevenLabs agent
-          └──────── voice (ElevenLabs React SDK) ────────────────────────────────────────▶
+Student's browser
+  ├─ reads the uploaded Stella file, runs the graph engine and answers the agent's tool calls
+  └─ voice ◀──▶ ElevenLabs agent (speech, language model, tools requested by name)
 ```
+
+Everything runs in the student's browser except the voice agent. The model file is read in the
+page and never uploaded to a server. The agent asks the page for facts through ElevenLabs *client
+tools* (`get_overview`, `get_loop`, …), so there is no backend to host, no tunnel and no webhook
+secret. The same Next.js app deploys to Vercel as is.
 
 | Part | Stack |
 |---|---|
 | Voice (speech-to-text, LLM, text-to-speech, interruptions) | ElevenLabs Agents |
-| Backend: diagram engine + agent tools | Python, FastAPI, NetworkX, RapidFuzz |
+| Stella reader, equation analysis, graph engine | TypeScript in `web/lib/`, RapidFuzz (`rapidfuzz-js`) |
 | Student page | Next.js, React, Tailwind CSS, `@elevenlabs/react` |
-| Diagrams | JSON files in `backend/models/` |
+| Built-in example diagrams | JSON files in `web/lib/models/` |
+| Hosting | Vercel |
+
+## How a conversation goes
+
+1. The student opens the page and either uploads a `.stmx` file or starts talking right away.
+   With no model loaded, the agent asks them to use the upload button.
+2. The page reads the file. Variables, stocks, flows and links come straight from the file. The
+   direction of each link (+ or −) is the author's own mark when the connector has one, otherwise
+   it is worked out from the equation, and it is reported as **unclear** when the equation can't
+   settle it. The agent is told never to pick a direction for an unclear link.
+3. The agent says what was loaded and asks "would you like me to describe it?" Then it answers
+   questions by calling the tools: overview, what affects X, walk through a loop, if X goes up
+   what happens to Y, what the graphs plot, where things are drawn.
+
+Pictures and PDFs are not supported yet; only Stella files.
 
 ## Prerequisites
 
 | Need | Check / get it |
 |---|---|
 | Git | `git --version` |
-| Python 3.11+ | `python3 --version` |
-| Node.js 20+ and npm | `node --version` |
+| Node.js 22.18+ and npm | `node --version` |
 | An ElevenLabs account and API key | elevenlabs.io → Profile → API Keys. The key needs access to Agents (Conversational AI). |
-| ngrok, so ElevenLabs can reach your local server | `brew install ngrok`, then sign in once with `ngrok config add-authtoken <token>` |
+| A Vercel account (to deploy) | vercel.com |
 | A browser with a microphone | Chrome, Edge, Safari or Firefox |
 
-## 1. Clone
+## 1. Clone and install
 
 ```bash
 git clone https://github.com/uchiha-vivek/systems-thinking-voice-tutor.git
 ```
 
 ```bash
-cd systems-thinking-voice-tutor
+cd systems-thinking-voice-tutor/web && npm install
 ```
 
-## 2. Install
-
-Backend (Python):
-
-```bash
-python3 -m venv .venv
-```
-
-```bash
-.venv/bin/pip install -r requirements.txt
-```
-
-Frontend (Next.js):
-
-```bash
-cd web && npm install && cd ..
-```
-
-## 3. Configure
+## 2. Configure
 
 ### Create the agent in ElevenLabs
 
 In the ElevenLabs dashboard, go to **Agents → New agent → Blank** and pick a clear, calm voice.
 Copy the agent id (it starts with `agent_`). You don't need to write the prompt or add tools by
-hand: the setup script in step 5 does that.
+hand: `npm run setup-agent` does that.
 
-### Backend secrets: `.env` in the project root
+### Environment variables: `web/.env.local`
 
 ```bash
-cp .env.example .env
+cp .env.example .env.local
 ```
-
-Fill in:
 
 | Variable | Value |
 |---|---|
-| `ELEVENLABS_API_KEY` | Your ElevenLabs API key |
 | `ELEVENLABS_AGENT_ID` | The agent id you just copied |
-| `PUBLIC_BASE_URL` | Leave empty for now; you fill it in step 4 |
-| `TOOL_SECRET` | Any long random string. Generate one with the command below |
+| `ELEVENLABS_API_KEY` | Your ElevenLabs API key. Only `npm run setup-agent` reads it, so it is never needed on Vercel |
+
+`.env.local` is git-ignored. Never commit it.
+
+## 3. Connect the agent
 
 ```bash
-python3 -c "import secrets;print(secrets.token_urlsafe(32))"
+npm run setup-agent
 ```
 
-### Frontend: `web/.env.local`
+This sets the agent's prompt, greeting, dynamic variables and LLM, creates the six client tools
+and attaches them to the agent. It only updates tools already attached to this agent, so it is
+safe in a workspace shared with other projects. Run it again whenever
+`scripts/system_prompt.txt`, `scripts/first_message.txt` or `lib/tool-specs.ts` changes.
+
+## 4. Run locally
 
 ```bash
-echo "BACKEND_URL=http://localhost:8000" > web/.env.local
+npm run dev
 ```
 
-`.env` and `web/.env.local` are git-ignored. Never commit them.
+Open **http://localhost:3000**, upload a Stella file (or press an example), press **Start
+conversation**, allow the microphone and speak. You can also type a question. Press **Escape**
+to end. The Appearance switch at the bottom picks System, Light or Dark.
 
-## 4. Run
-
-Open three terminals in the project folder.
-
-**Terminal 1: backend**
-
-```bash
-cd backend && ../.venv/bin/uvicorn server:app --port 8000
-```
-
-**Terminal 2: public tunnel**
-
-```bash
-ngrok http 8000
-```
-
-Copy the `https://…` forwarding URL ngrok prints into `.env` as `PUBLIC_BASE_URL`, with no
-trailing slash. Check it works:
-
-```bash
-curl -s https://YOUR-NGROK-URL/health
-```
-
-You should see `{"ok":true,"models":["deer-population","water-supply"]}`.
-
-**Terminal 3: student page**
-
-```bash
-cd web && npm run dev
-```
-
-## 5. Connect the agent to the backend
-
-With the backend and tunnel running, from the project root:
-
-```bash
-.venv/bin/python scripts/setup_agent.py
-```
-
-This sets the agent's prompt, first message, dynamic variables and LLM, creates the six
-webhook tools pointing at your tunnel, and attaches them to the agent. It only updates tools
-already attached to this agent, so it's safe in a workspace shared with other projects.
-
-**Re-run it whenever the ngrok URL or `TOOL_SECRET` changes.** Free ngrok URLs change each
-time ngrok restarts.
-
-## 6. Use it
-
-Open **http://localhost:3000**, choose a model, press **Start conversation**, allow the
-microphone and speak. You can also type a question. Press **Escape** to end. The Appearance
-switch at the bottom picks System, Light or Dark.
-
-Try with the **Deer Population** model:
+Try with the **Deer Population** example:
 
 | Say | You should hear |
 |---|---|
@@ -157,60 +114,67 @@ Try with the **Deer Population** model:
 | "Where is the balancing loop on the diagram?" | On the right, marked B |
 | "What affects wolves?" | No such variable, then the real ones |
 
-Each factual answer should show a `POST /tools/...` line in the backend terminal. If it
-doesn't, the agent is answering from its own knowledge; see Troubleshooting.
+## 5. Deploy to Vercel
+
+1. Push the repo to GitHub and import it in Vercel.
+2. Set **Root Directory** to `web`.
+3. Add `ELEVENLABS_AGENT_ID` under Project Settings → Environment Variables.
+4. Deploy. Nothing else is needed: the agent talks to the page in the browser, not to your server.
 
 ## Tests
-
-```bash
-cd backend && ../.venv/bin/python -m pytest -q tests
-```
 
 ```bash
 cd web && npm test
 ```
 
-Backend (54): the engine, every tool over HTTP (secret check, unknown model, the expected
-answers for both diagrams) and the tool payloads `setup_agent.py` sends. Frontend (19): the
-page with the ElevenLabs SDK mocked (start/stop, dynamic variables, mic blocked, backend down,
-transcript, typed questions, Escape, screen-reader opt-in, tab order), the theme switcher and
-the `/api` proxy config. None of the tests call ElevenLabs.
+The tests cover the equation reader (which way each input pushes a result), the Stella reader,
+the graph engine, every tool, the page with the ElevenLabs SDK mocked (upload, start, mid-call
+upload, tool answers, keyboard order), and the setup script's tool definitions. None of them
+call ElevenLabs.
+
+`__tests__/engine-parity.test.ts` compares the engine with answers recorded from the original
+Python/NetworkX engine on the built-in diagrams.
 
 ## Project layout
 
 ```
-backend/
-  engine.py            graph engine: loops, R/B type, causes and effects, paths
-  server.py            FastAPI: the six /tools/* endpoints + /api/models, /api/config, /health
-  models/*.json        one file per diagram; the filename is the model_id
-  tests/
-scripts/
-  setup_agent.py       creates/updates the agent's tools and settings
-  system_prompt.txt    the agent's prompt
-  first_message.txt    the agent's greeting
-web/                   Next.js + Tailwind student page
-  app/tutor.tsx        the page
-  app/theme-switcher.tsx
+web/
+  app/
+    tutor.tsx            the student page: upload, voice, transcript, client tools
+    theme-switcher.tsx
+    api/config/          serves the agent id
+  lib/
+    stella.ts            reads a .stmx file: variables, stocks and flows, links, graphs
+    equation.ts          parses Stella equations and works out the direction of each input
+    engine.ts            graph engine: loops, R/B type, causes and effects, paths
+    tools.ts             the agent's tools, answering from the loaded model
+    tool-specs.ts        tool names, descriptions and parameters (shared with setup-agent)
+    models/*.json        built-in example diagrams, registered in models/index.ts
+  scripts/
+    setup-agent.ts       creates/updates the agent's tools and settings
+    system_prompt.txt    the agent's prompt: behaviour only, no model data
+    first_message.txt    the greeting: {{opening}}, filled in by the page
   __tests__/
 ```
 
-To add a diagram, write a new JSON file in `backend/models/` in the same format as the two
-existing ones and restart the backend.
+To add a built-in example, write a JSON file in `web/lib/models/` in the same format as the two
+existing ones, then import it and add it to the list in `web/lib/models/index.ts`.
 
 ## Troubleshooting
 
 | Problem | Likely cause / fix |
 |---|---|
-| Page says "Could not reach the tutor server" | Backend isn't running on port 8000 |
-| Agent answers without calling tools | Run `setup_agent.py` again; check the backend terminal for `/tools/` calls |
-| Tool calls get 401 | `TOOL_SECRET` in `.env` changed since the last `setup_agent.py` run. Run it again |
-| Tool calls time out | Tunnel is down or its URL changed. Check `curl $PUBLIC_BASE_URL/health`, update `.env`, re-run `setup_agent.py` |
-| "Unknown model" errors | The page didn't pass the model; reload and pick a model before starting |
+| "Could not read as XML" / "not a Stella model" | The file isn't a Stella `.stmx`. Save from Stella Architect with File → Save |
+| "Models that use arrays are not supported yet" | The model uses subscripted (array) variables |
+| The overview warns that some link directions are unclear | The equation doesn't settle the direction (for example a switch between two formulas). The agent says so instead of guessing |
+| Agent answers without calling tools | Run `npm run setup-agent` again and check the transcript for tool calls |
+| The agent says no model is loaded | Upload a file or press an example; the page tells the agent right away |
 | No microphone | The browser blocked it. Use `localhost` or HTTPS and allow mic access |
-| `setup_agent.py` returns 422 | ElevenLabs changed a field name. Check their Agents API docs |
+| `setup-agent` returns 422 | ElevenLabs changed a field name. Check their Agents API docs |
+| `setup-agent` fails with a syntax error | Node is older than 22.18; it can't run TypeScript directly. Upgrade Node |
 
 ## Lock down later
 
 The agent is **public**: anyone with its id can start a conversation, and usage is billed to
 your ElevenLabs workspace. Before sharing beyond testing, make the agent private and have the
-backend issue signed conversation URLs.
+app issue signed conversation URLs.
