@@ -1,6 +1,8 @@
 // Graph engine: every structural fact the voice agent speaks comes from here.
 import { weightedRatio } from "rapidfuzz-js/fuzz";
 
+import type { Diagram } from "./diagram";
+
 export type Polarity = "+" | "-" | "?";
 type LoopType = "R" | "B" | "?";
 
@@ -44,6 +46,8 @@ export interface ModelData {
   }[];
   loops?: { id: string; name?: string; narrative?: string; variables: string[] }[];
   behavior_graphs?: unknown[];
+  /** Where things are drawn, read from a Stella file. Only the page uses it, to draw the diagram. */
+  diagram?: Diagram;
   behavior_note?: string;
 }
 

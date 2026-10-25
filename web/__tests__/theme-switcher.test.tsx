@@ -1,55 +1,60 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { ThemeSwitcher } from "@/app/theme-switcher";
+import { ThemeToggle } from "@/app/theme-switcher";
 
 const root = () => document.documentElement;
+
+function mockOsDark(dark: boolean) {
+  vi.stubGlobal(
+    "matchMedia",
+    vi.fn(() => ({ matches: dark, addEventListener: vi.fn(), removeEventListener: vi.fn() })),
+  );
+}
 
 beforeEach(() => {
   delete root().dataset.theme;
   localStorage.clear();
+  vi.unstubAllGlobals();
 });
 
-describe("Theme switcher", () => {
-  it("is a labelled group that defaults to System", () => {
-    render(<ThemeSwitcher />);
-    expect(screen.getByRole("group", { name: "Appearance" })).toBeInTheDocument();
-    expect(screen.getByRole("radio", { name: "System" })).toBeChecked();
+describe("Theme toggle", () => {
+  it("is one labelled icon button that follows the OS until clicked", () => {
+    mockOsDark(false);
+    render(<ThemeToggle />);
+    expect(screen.getByRole("button", { name: "Switch to dark mode" })).toBeInTheDocument();
     expect(root().dataset.theme).toBeUndefined();
   });
 
-  it("Light and Dark set the theme on the page and remember it", async () => {
-    render(<ThemeSwitcher />);
-    await userEvent.click(screen.getByRole("radio", { name: "Light" }));
-    expect(root().dataset.theme).toBe("light");
-    expect(localStorage.getItem("theme")).toBe("light");
+  it("offers light mode when the OS is dark", () => {
+    mockOsDark(true);
+    render(<ThemeToggle />);
+    expect(screen.getByRole("button", { name: "Switch to light mode" })).toBeInTheDocument();
+  });
 
-    await userEvent.click(screen.getByRole("radio", { name: "Dark" }));
+  it("switches between dark and light and remembers the choice", async () => {
+    mockOsDark(false);
+    render(<ThemeToggle />);
+    await userEvent.click(screen.getByRole("button", { name: "Switch to dark mode" }));
     expect(root().dataset.theme).toBe("dark");
     expect(localStorage.getItem("theme")).toBe("dark");
-  });
 
-  it("System goes back to following the OS and forgets the choice", async () => {
-    render(<ThemeSwitcher />);
-    await userEvent.click(screen.getByRole("radio", { name: "Dark" }));
-    await userEvent.click(screen.getByRole("radio", { name: "System" }));
-    expect(root().dataset.theme).toBeUndefined();
-    expect(localStorage.getItem("theme")).toBeNull();
+    await userEvent.click(screen.getByRole("button", { name: "Switch to light mode" }));
+    expect(root().dataset.theme).toBe("light");
+    expect(localStorage.getItem("theme")).toBe("light");
   });
 
   it("shows the theme already applied before the page loaded", () => {
     root().dataset.theme = "dark";
-    render(<ThemeSwitcher />);
-    expect(screen.getByRole("radio", { name: "Dark" })).toBeChecked();
+    render(<ThemeToggle />);
+    expect(screen.getByRole("button", { name: "Switch to light mode" })).toBeInTheDocument();
   });
 
-  it("arrow keys move between the options", async () => {
-    render(<ThemeSwitcher />);
+  it("works with the keyboard", async () => {
+    render(<ThemeToggle />);
     await userEvent.tab();
-    expect(screen.getByRole("radio", { name: "System" })).toHaveFocus();
-    await userEvent.keyboard("{ArrowRight}");
-    expect(screen.getByRole("radio", { name: "Light" })).toBeChecked();
-    expect(root().dataset.theme).toBe("light");
+    await userEvent.keyboard("{Enter}");
+    expect(root().dataset.theme).toBe("dark");
   });
 });

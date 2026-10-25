@@ -1,7 +1,8 @@
 // @vitest-environment node
 // The client-tool definitions setup-agent.ts sends to ElevenLabs, checked against what the page handles.
 import { describe, expect, it } from "vitest";
-import { FIRST_MESSAGE, SYSTEM_PROMPT, toolConfig } from "@/scripts/setup-agent";
+import { readFileSync } from "node:fs";
+import { FIRST_MESSAGE, PRIVACY_SETTINGS, SYSTEM_PROMPT, toolConfig, TURN_SETTINGS } from "@/scripts/setup-agent";
 import { TOOL_SPECS } from "@/lib/tool-specs";
 import { TOOL_NAMES } from "@/lib/tools";
 
@@ -35,6 +36,19 @@ describe("setup-agent", () => {
         expect(prop.description).toBeTruthy();
       }
     }
+  });
+
+  it("noise doesn't count as the student interrupting, but talking still does", () => {
+    expect(TURN_SETTINGS.vad.background_voice_detection).toBe(true);
+    expect(TURN_SETTINGS.turn.turn_eagerness).toBe("patient");
+    expect(TURN_SETTINGS.turn.interruption_ignore_terms).toContain("mm-hmm");
+    expect(SYSTEM_PROMPT).toMatch(/never say your answer got cut off/);
+  });
+
+  it("keeps transcripts only as long as the page's privacy notice says, and no audio", () => {
+    expect(PRIVACY_SETTINGS.privacy.record_voice).toBe(false);
+    const page = readFileSync(new URL("../app/tutor.tsx", import.meta.url), "utf8");
+    expect(page).toContain(`deleted after ${PRIVACY_SETTINGS.privacy.retention_days} days`);
   });
 
   it("the greeting is supplied by the page", () => {
