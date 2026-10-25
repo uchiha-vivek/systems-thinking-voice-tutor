@@ -3,6 +3,7 @@
 // Everything structural (variables, flows in and out of stocks, which variable uses which) is read
 // directly from the file. The direction of each link comes from the author's own +/- mark when the
 // connector has one, otherwise from the equation, and is "?" when the equation can't settle it.
+import { describeLayout, parseDiagram } from "./diagram";
 import type { ModelData } from "./engine";
 import {
   canonName,
@@ -216,6 +217,11 @@ export function parseStella(xml: string): ModelData {
     graphs.push({ title: named || `Graph ${graphs.length + 1}`, series });
   }
 
+  const diagram = parseDiagram(root, {
+    idOf,
+    polarityOf: (from, to) => links.get(`${from}\u0000${to}`)?.polarity,
+  });
+
   return {
     id: slug(title),
     title,
@@ -225,6 +231,8 @@ export function parseStella(xml: string): ModelData {
     caveats: caveats.length ? caveats : undefined,
     variables,
     links: [...links.values()],
+    diagram,
+    layout_description: diagram && describeLayout(diagram),
     behavior_graphs: graphs.length ? graphs : undefined,
     behavior_note: graphs.length
       ? "The file records which variables each graph plots, but not the results of a simulation run, so the shapes of the curves are not known."

@@ -40,6 +40,28 @@ export function toolConfig(spec: ToolSpec) {
   };
 }
 
+// How the agent decides the student is speaking. Loud sounds were cutting the tutor off, so it
+// filters background voices, waits for clearer speech, and ignores short listening sounds.
+// The student can still interrupt on purpose by talking.
+export const TURN_SETTINGS = {
+  turn: {
+    turn_eagerness: "patient",
+    interruption_ignore_terms: ["mm-hmm", "uh-huh", "okay", "ok", "yeah", "mhm"],
+    merge_with_default_ignore_terms: true,
+  },
+  vad: { background_voice_detection: true },
+};
+
+// What ElevenLabs keeps. The page tells students transcripts are deleted after 30 days, so keep
+// the two in step. Existing conversations are left as they were.
+export const PRIVACY_SETTINGS = {
+  privacy: {
+    record_voice: false,
+    retention_days: 30,
+    apply_to_existing_conversations: false,
+  },
+};
+
 function requireEnv(name: string): string {
   const value = process.env[name]?.trim();
   if (!value) throw new Error(`${name} is not set. Add it to web/.env.local.`);
@@ -87,14 +109,16 @@ async function main() {
   }
 
   const patch = {
+    platform_settings: PRIVACY_SETTINGS,
     conversation_config: {
+      ...TURN_SETTINGS,
       agent: {
         first_message: FIRST_MESSAGE,
         language: "en",
         dynamic_variables: {
           dynamic_variable_placeholders: {
             opening:
-              "Hi! I'm your Systems Thinking tutor. To begin, upload your Stella model with the upload button on this page, and I'll walk you through it.",
+              "Hi, I'm your Systems Thinking tutor. Upload your Stella model with the button on this page, and I can describe it. You can ask me questions, and I can ask you questions too.",
           },
         },
         prompt: { prompt: SYSTEM_PROMPT, llm, temperature: 0.3, tool_ids: [...others, ...toolIds] },

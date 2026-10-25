@@ -18,7 +18,8 @@ Student's browser
 Everything runs in the student's browser except the voice agent. The model file is read in the
 page and never uploaded to a server. The agent asks the page for facts through ElevenLabs *client
 tools* (`get_overview`, `get_loop`, …), so there is no backend to host, no tunnel and no webhook
-secret. The same Next.js app deploys to Vercel as is.
+secret. The same Next.js app deploys to Vercel as is. The one server route, `/api/feedback`,
+only saves the optional after-session rating (see "Feedback sheet").
 
 | Part | Stack |
 |---|---|
@@ -102,7 +103,7 @@ npm run dev
 
 Open **http://localhost:3000**, upload a Stella file (or press an example), press **Start
 conversation**, allow the microphone and speak. You can also type a question. Press **Escape**
-to end. The Appearance switch at the bottom picks System, Light or Dark.
+to end. The sun or moon button at the top right switches between light and dark mode.
 
 Try with the **Deer Population** example:
 
@@ -178,3 +179,37 @@ existing ones, then import it and add it to the list in `web/lib/models/index.ts
 The agent is **public**: anyone with its id can start a conversation, and usage is billed to
 your ElevenLabs workspace. Before sharing beyond testing, make the agent private and have the
 app issue signed conversation URLs.
+
+## Feedback sheet (optional)
+
+After each conversation the page asks "Was this helpful?" and for a 1–5 rating. Answers go to
+`/api/feedback`, which adds a row to a Google Sheet. Until this is set up, the form says the
+feedback couldn't be sent; nothing else is affected. Only the answers, the model title, the
+number of transcript lines and the ElevenLabs conversation id are saved, never the transcript.
+
+1. Create a Google Sheet. Open **Extensions → Apps Script**, replace the code with
+   `web/scripts/feedback-sheet.gs`, and save.
+2. In Apps Script, open **Project Settings → Script properties** and add `SECRET` with a long
+   random value (for example from `openssl rand -hex 24`).
+3. **Deploy → New deployment → Web app**. Execute as **Me**, access **Anyone**. Copy the web
+   app URL (it ends in `/exec`).
+4. Add to `web/.env.local`, and on Vercel under Environment Variables:
+
+| Variable | Value |
+|---|---|
+| `FEEDBACK_SHEET_URL` | The web app URL from step 3 |
+| `FEEDBACK_SECRET` | The same value as the `SECRET` property |
+
+The URL and secret stay on the server; the page only talks to `/api/feedback`.
+
+## Privacy
+
+The model file is read in the browser and never uploaded. The conversation itself (voice and
+transcript) is processed by ElevenLabs. `npm run setup-agent` turns off audio recording and sets
+transcripts to be deleted after 30 days (`PRIVACY_SETTINGS` in `web/scripts/setup-agent.ts`);
+the page's privacy notice says the same, so change both together.
+
+## License
+
+MIT. See [LICENSE](LICENSE). The code is free to use and change. Running the voice tutor uses an
+ElevenLabs account, billed per minute to whoever owns the agent.
