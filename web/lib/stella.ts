@@ -27,6 +27,16 @@ const text = (el: Element | undefined) => el?.textContent?.trim() ?? "";
 /** "Susceptible\nPopulation S" -> "Susceptible Population S" */
 const cleanLabel = (name: string) => name.replace(/\\n/g, " ").replace(/\s+/g, " ").trim();
 
+/**
+ * Speech gets lone capital letters wrong: "Infected Population I" came out as "eye" or "one".
+ * Say them as "letter I". A capital that starts a longer label ("A Rate") is left alone.
+ */
+export function spokenLabel(label: string): string {
+  return label.replace(/(^|\s)([A-Z])(?=\s|$)/g, (m, space: string, letter: string, at: number) =>
+    at === 0 && label.length > 1 ? m : `${space}letter ${letter}`,
+  );
+}
+
 const slug = (s: string) =>
   s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "uploaded-model";
 
@@ -96,7 +106,9 @@ export function parseStella(xml: string): ModelData {
     const eqn = text(child(el, "eqn"));
     const v: Variable = {
       id,
-      label: cleanLabel(name),
+      label: spokenLabel(cleanLabel(name)),
+      // The name as written, so "infected population I" still finds it.
+      aliases: spokenLabel(cleanLabel(name)) === cleanLabel(name) ? undefined : [cleanLabel(name)],
       kind: el.localName === "aux" ? "variable" : el.localName,
       description: cleanDoc(text(child(el, "doc")), units) || undefined,
       units: units || undefined,

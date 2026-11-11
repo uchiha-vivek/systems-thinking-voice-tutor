@@ -1,6 +1,7 @@
 // @vitest-environment node
 // Every tool, called the way the agent calls it, against the built-in example models.
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+import { ModelGraph } from "@/lib/engine";
 import { MODELS } from "@/lib/models";
 import { clientToolsFor, NO_MODEL, runTool, TOOL_NAMES } from "@/lib/tools";
 import { TOOL_SPECS } from "@/lib/tool-specs";
@@ -12,14 +13,14 @@ type R = Record<string, any>; // eslint-disable-line @typescript-eslint/no-expli
 const call = (model: typeof deer | null, name: string, args: unknown = {}) => runTool(model, name, args) as R;
 
 describe("tool plumbing", () => {
-  it("serves exactly the six tools", () => {
+  it("serves exactly these tools", () => {
     expect([...TOOL_NAMES].sort()).toEqual(
-      ["find_path", "get_behavior", "get_layout", "get_loop", "get_overview", "get_variable"].sort(),
+      ["find_path", "get_behavior", "get_layout", "get_loop", "get_overview", "get_variable", "name_loop", "set_theme"].sort(),
     );
   });
 
   it("answers with an error the agent can speak when no model is loaded", () => {
-    for (const name of TOOL_NAMES) expect(runTool(null, name, { name: "x", query: "x", from_name: "x", to_name: "x" })).toBe(NO_MODEL);
+    for (const name of TOOL_NAMES.filter((n) => n !== "set_theme")) expect(runTool(null, name, {})).toBe(NO_MODEL);
   });
 
   it("asks for a missing or blank parameter instead of crashing", () => {
@@ -152,5 +153,41 @@ describe("water supply", () => {
 
   it("lists loops in the same order every time", () => {
     expect(call(water, "get_overview").loops.map((l: { id: string }) => l.id)).toEqual(["R3.1", "B3.1", "B3.2", "B2.1", "B4.1"]);
+  });
+});
+
+describe("switching the page theme by voice (professor asked and it couldn't)", () => {
+  it("works with no model loaded and passes light or dark to the page", () => {
+    const setTheme = vi.fn();
+    expect(runTool(null, "set_theme", { mode: "Dark" }, { setTheme })).toMatchObject({ done: true, mode: "dark" });
+    expect(setTheme).toHaveBeenCalledWith("dark");
+  });
+
+  it("refuses anything but light or dark", () => {
+    const setTheme = vi.fn();
+    expect(runTool(null, "set_theme", { mode: "blue" }, { setTheme }).error).toMatch(/light or dark/);
+    expect(setTheme).not.toHaveBeenCalled();
+  });
+});
+
+describe("loop nicknames", () => {
+  it("saves a nickname, finds the loop by it, and tells the page to redraw", () => {
+    const m = new ModelGraph(structuredClone(MODELS.get("deer-population")!.data));
+    const onModelChange = vi.fn();
+    const id = m.loops[0].id;
+    expect(runTool(m, "name_loop", { loop_id: id, nickname: "  herd growth   loop " }, { onModelChange })).toMatchObject({
+      saved: true,
+      nickname: "herd growth loop",
+    });
+    expect(onModelChange).toHaveBeenCalledOnce();
+    expect(m.findLoops("the herd growth loop").map((l) => l.id)).toEqual([id]);
+    expect((m.loop(id) as { nickname?: string }).nickname).toBe("herd growth loop");
+  });
+
+  it("rejects an unknown loop id or a nickname already in use", () => {
+    const m = new ModelGraph(structuredClone(MODELS.get("deer-population")!.data));
+    expect(m.nameLoop("R99", "x").error).toMatch(/no loop R99/);
+    m.nameLoop(m.loops[0].id, "growth loop");
+    expect(m.nameLoop(m.loops[1].id, "Growth Loop").error).toMatch(/already called/);
   });
 });

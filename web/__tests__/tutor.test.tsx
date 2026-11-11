@@ -9,7 +9,7 @@ import { TINY_SIR } from "./fixtures/tiny-sir";
 type Options = {
   clientTools: Record<string, (args: unknown) => string>;
   onConnect?: (p: { conversationId: string }) => void;
-  onDisconnect?: () => void;
+  onDisconnect?: (details?: { reason: string }) => void;
   onMessage?: (m: { role: string; message: string }) => void;
 } & Record<string, unknown>;
 
@@ -88,7 +88,7 @@ beforeEach(() => {
 describe("loading a model", () => {
   it("starts idle with nothing loaded", async () => {
     await renderReady();
-    expect(screen.getByRole("status")).toHaveTextContent("Not connected.");
+    expect(screen.getByRole("status")).toHaveTextContent("Press Start conversation to connect.");
     expect(screen.getByLabelText("Your model")).toHaveAttribute("type", "file");
     expect(screen.getByRole("button", { name: "Start conversation" })).toHaveAttribute("aria-pressed", "false");
     expect(screen.getByLabelText("Or type a question")).toBeDisabled();
@@ -146,6 +146,7 @@ describe("starting a conversation", () => {
     expect(getUserMedia).toHaveBeenCalledWith({ audio: true });
     expect(sdk.startSession).toHaveBeenCalledWith({
       agentId: "agent_test",
+      connectionType: "webrtc",
       dynamicVariables: {
         opening:
           "Hi, I'm your Systems Thinking tutor. I've loaded Deer Population. It has 3 variables and 2 feedback loops. You can ask me questions, and I can quiz you too. Want me to describe it?",
@@ -157,7 +158,7 @@ describe("starting a conversation", () => {
     await renderReady();
     await userEvent.click(screen.getByRole("button", { name: "Start conversation" }));
     const call = sdk.startSession.mock.calls[0][0];
-    expect(call.dynamicVariables.opening).toMatch(/Upload your Stella model/);
+    expect(call.dynamicVariables.opening).toMatch(/Upload your model file/);
   });
 
   it("explains a blocked microphone instead of starting", async () => {
@@ -222,12 +223,12 @@ describe("the agent's tools", () => {
     const loop = JSON.parse(tools.get_loop({ query: "reinforcing loop" }));
     expect(loop.type).toBe("reinforcing");
     expect(loop.steps_in_order).toEqual([
-      "When Infected Population I goes up, Infection Rate goes up.",
-      "When Infection Rate goes up, Infected Population I fills faster.",
+      "When Infected Population letter I goes up, Infection Rate goes up.",
+      "When Infection Rate goes up, Infected Population letter I fills faster.",
     ]);
-    expect(loop.closes_back_to).toBe("Infected Population I");
+    expect(loop.closes_back_to).toBe("Infected Population letter I");
     const path = JSON.parse(tools.find_path({ from_name: "contact rate", to_name: "infected" }));
-    expect(path.paths[0].overall).toBe("If Contact Rate goes up, Infected Population I goes up through this chain.");
+    expect(path.paths[0].overall).toBe("If Contact Rate goes up, Infected Population letter I goes up through this chain.");
   });
 
   it("switch to a newly loaded model", async () => {
@@ -326,7 +327,7 @@ describe("starting over", () => {
     expect(sdk.endSession).toHaveBeenCalled();
     expect(transcriptLines()).toHaveLength(0);
     expect(screen.getByText("The conversation will appear here once you start.")).toBeInTheDocument();
-    expect(screen.getByRole("status")).toHaveTextContent("Not connected.");
+    expect(screen.getByRole("status")).toHaveTextContent("Press Start conversation to connect.");
   });
 
   it("New conversation keeps the loaded model", async () => {
@@ -377,7 +378,7 @@ describe("transcript actions", () => {
 
   it("are disabled until there is something to save or erase", async () => {
     await renderReady();
-    for (const name of ["Download", "Email to myself", "Erase"]) {
+    for (const name of ["Download transcript", "Download recording", "Email to myself", "Erase"]) {
       expect(screen.getByRole("button", { name })).toBeDisabled();
     }
   });
@@ -387,7 +388,7 @@ describe("transcript actions", () => {
     const created: Blob[] = [];
     vi.stubGlobal("URL", { ...URL, createObjectURL: (b: Blob) => (created.push(b), "blob:x"), revokeObjectURL: vi.fn() });
     const click = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {});
-    await userEvent.click(screen.getByRole("button", { name: "Download" }));
+    await userEvent.click(screen.getByRole("button", { name: "Download transcript" }));
     expect(click).toHaveBeenCalled();
     const text = await created[0].text();
     expect(text).toContain("Model: Deer Population");
@@ -404,7 +405,7 @@ describe("transcript actions", () => {
     await userEvent.click(screen.getByRole("button", { name: "Erase" }));
     expect(transcriptLines()).toHaveLength(2); // said no
     await userEvent.click(screen.getByRole("button", { name: "Erase" }));
-    expect(confirm).toHaveBeenLastCalledWith(expect.stringMatching(/ElevenLabs deletes its own copy after 30 days/));
+    expect(confirm).toHaveBeenLastCalledWith(expect.stringMatching(/ElevenLabs deletes its own copy of the transcript after 30 days/));
     expect(transcriptLines()).toHaveLength(0);
     confirm.mockRestore();
   });
@@ -477,5 +478,52 @@ describe("feedback after a session", () => {
     await endAfterTalking();
     await userEvent.click(screen.getByRole("button", { name: "New conversation" }));
     expect(screen.queryByRole("form", { name: "How was this session?" })).not.toBeInTheDocument();
+  });
+});
+
+describe("phones and time limits", () => {
+  it("doesn't filter the file picker, so phones can choose a .stmx file", async () => {
+    await renderReady();
+    expect(screen.getByLabelText("Your model")).not.toHaveAttribute("accept");
+  });
+
+  it("says why the call ended when it hits the time limit", async () => {
+    vi.useFakeTimers({ toFake: ["Date", "setTimeout", "clearTimeout"] });
+    try {
+      const view = render(<Tutor />);
+      await act(async () => {});
+      connect(view);
+      act(() => vi.advanceTimersByTime(29 * 60 * 1000));
+      expect(screen.getByRole("status")).toHaveTextContent("One minute left");
+      act(() => vi.advanceTimersByTime(60 * 1000));
+      sdk.status = "disconnected";
+      act(() => opts().onDisconnect?.({ reason: "agent" }));
+      expect(screen.getByRole("status")).toHaveTextContent("reached its 30-minute limit");
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+});
+
+describe("other file types", () => {
+  it("loads a Vensim .mdl file and an XMILE .xml file", async () => {
+    const { TINY_SIR_MDL } = await import("./fixtures/tiny-sir-mdl");
+    await renderReady();
+    await upload(file("sir.mdl", TINY_SIR_MDL));
+    expect(await screen.findByText(/^Loaded /)).toBeInTheDocument();
+    await upload(file("sir.xml", TINY_SIR));
+    expect(await screen.findByText(/^Loaded Tiny SIR model/)).toBeInTheDocument();
+  });
+
+  it("explains that pictures and PDFs aren't supported yet", async () => {
+    await renderReady();
+    await upload(file("diagram.png", "x"));
+    expect(await screen.findByRole("alert")).toHaveTextContent(/Pictures and PDFs are not supported yet/);
+  });
+
+  it("gives the Vensim message for a broken .mdl file", async () => {
+    await renderReady();
+    await upload(file("notes.mdl", "<html>not a model</html>"));
+    expect(await screen.findByRole("alert")).toHaveTextContent(/not a Vensim model/);
   });
 });

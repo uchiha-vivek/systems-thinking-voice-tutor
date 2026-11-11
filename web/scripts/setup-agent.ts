@@ -1,4 +1,4 @@
-// Create/update the tutor's 6 client tools and attach them to the ElevenLabs agent.
+// Create/update the tutor's client tools and attach them to the ElevenLabs agent.
 //
 // Usage (from web/): npm run setup-agent
 //
@@ -10,6 +10,7 @@
 // shared with other projects, so this script never searches tools by name across the workspace:
 // it only updates tools already attached to THIS agent and creates whichever are missing.
 import { readFileSync } from "node:fs";
+import { MAX_CALL_SECONDS } from "../lib/limits.ts";
 import { TOOL_SPECS, type ToolSpec } from "../lib/tool-specs.ts";
 
 const API = "https://api.elevenlabs.io/v1/convai";
@@ -62,6 +63,11 @@ export const PRIVACY_SETTINGS = {
   },
 };
 
+// How long one session may run. It was 10 minutes, which cut a professor off mid-answer.
+export const CONVERSATION_SETTINGS = {
+  conversation: { max_duration_seconds: MAX_CALL_SECONDS },
+};
+
 function requireEnv(name: string): string {
   const value = process.env[name]?.trim();
   if (!value) throw new Error(`${name} is not set. Add it to web/.env.local.`);
@@ -112,13 +118,14 @@ async function main() {
     platform_settings: PRIVACY_SETTINGS,
     conversation_config: {
       ...TURN_SETTINGS,
+      ...CONVERSATION_SETTINGS,
       agent: {
         first_message: FIRST_MESSAGE,
         language: "en",
         dynamic_variables: {
           dynamic_variable_placeholders: {
             opening:
-              "Hi, I'm your Systems Thinking tutor. Upload your Stella model with the button on this page, and I can describe it. You can ask me questions, and I can ask you questions too.",
+              "Hi, I'm your Systems Thinking tutor. Upload your model file with the button on this page, and I can describe it. You can ask me questions, and I can ask you questions too.",
           },
         },
         prompt: { prompt: SYSTEM_PROMPT, llm, temperature: 0.3, tool_ids: [...others, ...toolIds] },

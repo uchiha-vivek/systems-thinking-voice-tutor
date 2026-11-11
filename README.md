@@ -3,7 +3,7 @@
 An accessible voice tutor that explains Systems Thinking diagrams (causal loop diagrams,
 stock-and-flow diagrams, behavior-over-time graphs) to blind and visually impaired students.
 
-A student uploads their model (a Stella `.stmx` file), presses **Start conversation** and talks: "Give me an overview",
+A student uploads their model (Stella `.stmx`, XMILE `.xmile`/`.xml` or Vensim `.mdl`), presses **Start conversation** and talks: "Give me an overview",
 "Walk me through the reinforcing loop", "If births go up, what happens to deaths?". An
 ElevenLabs voice agent answers, but every variable, link, polarity and loop it mentions comes
 from a graph engine on our server, never from the AI's own guess. A blind student can't check
@@ -28,6 +28,15 @@ only saves the optional after-session rating (see "Feedback sheet").
 | Student page | Next.js, React, Tailwind CSS, `@elevenlabs/react` |
 | Built-in example diagrams | JSON files in `web/lib/models/` |
 | Hosting | Vercel |
+
+## Contributors
+
+This project was built by two people:
+
+| Contributor | Role |
+|---|---|
+| **Lam** ([lamdao2016](https://github.com/lamdao2016)) | Concept, research, design, system prompt, testing, and user feedback (Systems Thinking capstone project) |
+| **Vivek** ([uchiha-vivek](https://github.com/uchiha-vivek)) | Engineering |
 
 ## How a conversation goes
 
@@ -207,7 +216,9 @@ The URL and secret stay on the server; the page only talks to `/api/feedback`.
 The model file is read in the browser and never uploaded. The conversation itself (voice and
 transcript) is processed by ElevenLabs. `npm run setup-agent` turns off audio recording and sets
 transcripts to be deleted after 30 days (`PRIVACY_SETTINGS` in `web/scripts/setup-agent.ts`);
-the page's privacy notice says the same, so change both together.
+the page's privacy notice says the same, so change both together. If the student leaves
+recording on, the page records the call itself (`web/lib/recorder.ts`) and keeps it only in that
+browser tab until they download it.
 
 ## License
 

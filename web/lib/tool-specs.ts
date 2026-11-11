@@ -1,5 +1,6 @@
-// The six tools the ElevenLabs agent can call. They run in the student's browser (as ElevenLabs
+// The tools the ElevenLabs agent can call. They run in the student's browser (as ElevenLabs
 // "client tools") against the model the student uploaded, so no tool needs a model id.
+// set_theme acts on the page itself and works even with no model loaded.
 // This file is the single source of truth: the page registers handlers for these names, and
 // scripts/setup-agent.ts registers the same names and parameters with ElevenLabs.
 // Keep it free of imports so the setup script can load it on its own.
@@ -46,6 +47,21 @@ export const TOOL_SPECS: ToolSpec[] = [
     description:
       "Get the behavior-over-time graphs the model's author set up, described in words. Use for 'what happens over time' and 'what does the graph show'.",
     params: {},
+  },
+  {
+    name: "name_loop",
+    description:
+      "Save the short nickname you gave a loop, so it is shown next to the loop's number on the page and the student can ask for it by that name. Call it whenever you give a loop a nickname.",
+    params: {
+      loop_id: "The loop's id as a tool gave it, e.g. 'R1' or 'B2'.",
+      nickname: "A short plain name built from the loop's variables, e.g. 'infection spread loop'.",
+    },
+  },
+  {
+    name: "set_theme",
+    description:
+      "Switch the web page between light mode and dark mode. Use when the student asks for dark mode, light mode, a darker or brighter screen, or less glare.",
+    params: { mode: "Either 'light' or 'dark'." },
   },
   {
     name: "get_layout",
