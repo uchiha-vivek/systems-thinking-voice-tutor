@@ -13,38 +13,38 @@ describe("reading a Stella file", () => {
     expect(data.title).toBe("Tiny SIR model");
     expect(data.id).toBe("tiny-sir-model");
     expect(data.variables.map((v) => [v.label, v.kind])).toEqual([
-      ["Susceptible Population S", "stock"],
-      ["Infected Population I", "stock"],
+      ["Susceptible Population letter S", "stock"],
+      ["Infected Population letter I", "stock"],
       ["Infection Rate", "flow"],
       ["Recovery Rate", "flow"],
       ["Contact Rate", "variable"],
-      ["Total Population N", "variable"],
+      ["Total Population letter N", "variable"],
       ["Recovery Time", "variable"],
       ["Crowding Effect", "variable"],
     ]);
   });
 
   it("keeps the author's description, units and constants", () => {
-    expect(byLabel("Susceptible Population S").description).toBe("People who can still catch it.");
-    expect(byLabel("Susceptible Population S").units).toBe("People");
+    expect(byLabel("Susceptible Population letter S").description).toBe("People who can still catch it.");
+    expect(byLabel("Susceptible Population letter S").units).toBe("People");
     expect(byLabel("Contact Rate").value).toBe(0.5);
-    expect(byLabel("Infected Population I").value).toBe(1);
+    expect(byLabel("Infected Population letter I").value).toBe(1);
   });
 
   it("records which flows fill and drain each stock", () => {
-    expect(byLabel("Infected Population I").inflows).toEqual(["Infection Rate"]);
-    expect(byLabel("Infected Population I").outflows).toEqual(["Recovery Rate"]);
+    expect(byLabel("Infected Population letter I").inflows).toEqual(["Infection Rate"]);
+    expect(byLabel("Infected Population letter I").outflows).toEqual(["Recovery Rate"]);
   });
 
   it("says how a flow is calculated, in words", () => {
     expect(byLabel("Infection Rate").equation).toBe(
-      "Contact Rate times Susceptible Population S times Infected Population I divided by Total Population N",
+      "Contact Rate times Susceptible Population letter S times Infected Population letter I divided by Total Population letter N",
     );
   });
 
   it("collects notes, the run length and the graphs the author set up", () => {
     expect(data.notes).toEqual(["Adapted from a classroom example", "The model runs from 0 to 50 Days."]);
-    expect(data.behavior_graphs).toEqual([{ title: "Graph 1", series: ["Infected Population I", "Susceptible Population S"] }]);
+    expect(data.behavior_graphs).toEqual([{ title: "Graph 1", series: ["Infected Population letter I", "Susceptible Population letter S"] }]);
   });
 });
 
@@ -91,17 +91,17 @@ describe("the loops it finds", () => {
   it("uses flow wording when describing a stock", () => {
     const r = model.variable("infected population") as { affected_by: { variable: string; effect: string }[] };
     expect(r.affected_by.find((a) => a.variable === "Infection Rate")!.effect).toBe(
-      "When Infection Rate goes up, Infected Population I fills faster.",
+      "When Infection Rate goes up, Infected Population letter I fills faster.",
     );
     expect(r.affected_by.find((a) => a.variable === "Recovery Rate")!.effect).toBe(
-      "When Recovery Rate goes up, Infected Population I drains faster.",
+      "When Recovery Rate goes up, Infected Population letter I drains faster.",
     );
   });
 
   it("answers path questions through the stocks", () => {
     const r = model.path("contact rate", "infected population") as { connected: boolean; paths: { overall: string }[] };
     expect(r.connected).toBe(true);
-    expect(r.paths[0].overall).toBe("If Contact Rate goes up, Infected Population I goes up through this chain.");
+    expect(r.paths[0].overall).toBe("If Contact Rate goes up, Infected Population letter I goes up through this chain.");
   });
 
   it("the overview describes stocks, flows and loop counts", () => {
@@ -109,7 +109,7 @@ describe("the loops it finds", () => {
     expect(ov).toMatchObject({
       title: "Tiny SIR model",
       source: "an uploaded Stella file",
-      stocks: ["Susceptible Population S", "Infected Population I"],
+      stocks: ["Susceptible Population letter S", "Infected Population letter I"],
       flows: ["Infection Rate", "Recovery Rate"],
       number_of_loops: 3,
       loop_counts: { reinforcing: 1, balancing: 2, unclear: 0 },
@@ -161,5 +161,28 @@ describe("files it refuses", () => {
   it("rejects arrayed models instead of misreading them", () => {
     const arrayed = TINY_SIR.replace('<aux name="Contact Rate">', '<aux name="Contact Rate"><dimensions><dim name="Region"/></dimensions>');
     expect(() => parseStella(arrayed)).toThrow(/arrays/);
+  });
+});
+
+describe("single letters in names (professor heard 'eye' and 'one' for I)", () => {
+  it("says a lone capital as 'letter X'", async () => {
+    const { spokenLabel } = await import("@/lib/stella");
+    expect(spokenLabel("Infected Population I")).toBe("Infected Population letter I");
+    expect(spokenLabel("S")).toBe("letter S");
+    expect(spokenLabel("Exposed E rate")).toBe("Exposed letter E rate");
+    expect(spokenLabel("A Rate")).toBe("A Rate"); // a leading capital word is left alone
+    expect(spokenLabel("Immunity 1")).toBe("Immunity 1");
+  });
+
+  it("still finds the variable by its written name", () => {
+    expect(model.resolve("Infected Population I")).toEqual([byLabel("Infected Population letter I").id]);
+  });
+});
+
+describe("loop numbers on an uploaded file", () => {
+  it("says the tutor numbered them, not the author", () => {
+    const ov = model.overview() as { loop_numbering?: string; loops: { id_given_by?: string }[] };
+    expect(ov.loop_numbering).toMatch(/tutor numbered these loops itself/);
+    expect(ov.loops[0].id_given_by).toMatch(/^the tutor, not the author/);
   });
 });

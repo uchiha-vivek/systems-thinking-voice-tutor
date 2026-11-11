@@ -17,6 +17,8 @@ export interface Shape {
   h: number;
   label: string[];
   labelSide: "center" | "top" | "bottom" | "left" | "right";
+  /** The variable this shape draws. Unset for aliases and unknown names. */
+  id?: string;
 }
 
 export interface Diagram {
@@ -130,6 +132,7 @@ export function parseDiagram(root: Element, { idOf, polarityOf }: Lookups): Diag
       const uid = el.getAttribute("uid");
       if (uid) byUid.set(uid, { shape, id });
     } else if (id) {
+      shape.id = id;
       byVar.set(id, shape);
     }
     if (kind === "flow") flowEls.push({ el, shape });
@@ -229,4 +232,82 @@ export function describeLayout(d: Diagram): string | undefined {
   if (!parts.length) return undefined;
   const sentences = parts.map((p) => p.charAt(0).toUpperCase() + p.slice(1) + ".");
   return `Positions as drawn in the file. ${sentences.join(" ")}`;
+}
+
+/** A numbered loop badge on the drawn diagram, so "R1" in speech matches what is on screen. */
+export interface LoopBadge {
+  id: string;
+  type: "R" | "B" | "?";
+  x: number;
+  y: number;
+}
+
+export const BADGE_R = 15;
+const MAX_BADGES = 12;
+
+/**
+ * Where to draw each loop's number: the middle of the loop's variables, nudged outward until it
+ * no longer covers a shape or another badge. Loops with fewer than two drawn variables are skipped.
+ */
+export function placeLoopBadges(
+  d: Diagram,
+  loops: { id: string; type: "R" | "B" | "?"; variables: string[] }[],
+  k = 1,
+): LoopBadge[] {
+  const byId = new Map(d.shapes.filter((s) => s.id).map((s) => [s.id!, s]));
+  const placed: LoopBadge[] = [];
+  const r = BADGE_R * k;
+  const boxes = d.shapes.flatMap((s) => [shapeBox(s), labelBox(s, k)]);
+  const free = (x: number, y: number) =>
+    boxes.every(([x0, y0, x1, y1]) => x < x0 - r || x > x1 + r || y < y0 - r || y > y1 + r) &&
+    placed.every((b) => Math.hypot(x - b.x, y - b.y) > 2 * r + 4) &&
+    d.loops.every((l) => Math.hypot(x - l.x, y - l.y) > l.r + r + 2);
+  for (const loop of loops) {
+    if (placed.length >= MAX_BADGES) break;
+    const pts = loop.variables.map((v) => byId.get(v)).filter((s): s is Shape => !!s);
+    if (pts.length < 2) continue;
+    const cx = pts.reduce((a, s) => a + s.x, 0) / pts.length;
+    const cy = pts.reduce((a, s) => a + s.y, 0) / pts.length;
+    let spot: [number, number] = [cx, cy];
+    // Spiral outward in small steps until there is room.
+    search: for (let ring = 0; ring <= 16; ring++) {
+      const steps = ring === 0 ? 1 : 8 * ring;
+      for (let i = 0; i < steps; i++) {
+        const a = (i / steps) * 2 * Math.PI;
+        const x = cx + Math.cos(a) * ring * 12;
+        const y = cy + Math.sin(a) * ring * 12;
+        if (free(x, y)) {
+          spot = [x, y];
+          break search;
+        }
+      }
+    }
+    placed.push({ id: loop.id, type: loop.type, x: spot[0], y: spot[1] });
+  }
+  return placed;
+}
+
+type Box = [number, number, number, number]; // x0, y0, x1, y1
+
+function shapeBox(s: Shape): Box {
+  return [s.x - s.w / 2, s.y - s.h / 2, s.x + s.w / 2, s.y + s.h / 2];
+}
+
+/** Roughly where a shape's name is written (same rules as the page's Label), in diagram units. */
+function labelBox(s: Shape, k: number): Box {
+  const lineH = 15 * k;
+  const w = Math.max(0, ...s.label.map((l) => l.length)) * 7 * k;
+  const h = s.label.length * lineH;
+  switch (s.labelSide) {
+    case "center":
+      return [s.x - w / 2, s.y - h / 2, s.x + w / 2, s.y + h / 2];
+    case "top":
+      return [s.x - w / 2, s.y - s.h / 2 - 6 - h, s.x + w / 2, s.y - s.h / 2];
+    case "left":
+      return [s.x - s.w / 2 - 6 - w, s.y - h / 2, s.x - s.w / 2, s.y + h / 2];
+    case "right":
+      return [s.x + s.w / 2, s.y - h / 2, s.x + s.w / 2 + 6 + w, s.y + h / 2];
+    default:
+      return [s.x - w / 2, s.y + s.h / 2, s.x + w / 2, s.y + s.h / 2 + 4 + h];
+  }
 }

@@ -1,13 +1,23 @@
 "use client";
 
-import { useId } from "react";
+import { useId, useMemo } from "react";
 
-import type { Diagram, Point, Shape } from "@/lib/diagram";
+import { BADGE_R, placeLoopBadges, type Diagram, type Point, type Shape } from "@/lib/diagram";
 
 // Text sizes in diagram units, before scaling up for big diagrams (see DiagramView).
 const FONT = 13;
 const LINE = 15;
 const SIGN: Record<string, string> = { "+": "+", "-": "−", "?": "?" };
+const LOOP_WORD = { R: "reinforcing", B: "balancing", "?": "unclear" } as const;
+
+export interface DrawnLoop {
+  id: string;
+  type: "R" | "B" | "?";
+  /** Variable ids, in loop order. */
+  variables: string[];
+  /** The tutor's nickname for it, once given. */
+  nickname?: string;
+}
 
 const path = (pts: Point[]) => pts.map(([x, y], i) => `${i ? "L" : "M"}${x.toFixed(1)} ${y.toFixed(1)}`).join(" ");
 
@@ -69,13 +79,25 @@ function signSpot(pts: Point[]): Point {
 }
 
 /** The model's stock-and-flow diagram, drawn from the positions saved in the Stella file. */
-export function DiagramView({ diagram, title }: { diagram: Diagram; title: string }) {
+export function DiagramView({ diagram, title, loops = [] }: { diagram: Diagram; title: string; loops?: DrawnLoop[] }) {
   const id = useId();
   const arrowHead = `${id}-arrow`;
   const pipeHead = `${id}-pipe`;
-  const [bx, by, bw, bh] = diagram.box;
   // A big model is shrunk to fit the page, so grow its text to stay readable.
-  const k = Math.min(2, Math.max(1, Math.max(bw, bh) / 900));
+  const k = Math.min(2, Math.max(1, Math.max(diagram.box[2], diagram.box[3]) / 900));
+  const badges = useMemo(() => placeLoopBadges(diagram, loops, k), [diagram, loops, k]);
+  const nameOf = useMemo(() => new Map(diagram.shapes.filter((s) => s.id).map((s) => [s.id!, s.label.join(" ")])), [diagram]);
+  // Grow the drawing area if a badge was nudged past the edge.
+  let [bx, by, bw, bh] = diagram.box;
+  for (const b of badges) {
+    const pad = BADGE_R * k + 6;
+    const x0 = Math.min(bx, b.x - pad);
+    const y0 = Math.min(by, b.y - pad);
+    bw = Math.max(bx + bw, b.x + pad) - x0;
+    bh = Math.max(by + bh, b.y + pad) - y0;
+    bx = x0;
+    by = y0;
+  }
 
   return (
     <figure className="rounded-2xl border border-line bg-surface p-3 shadow-card sm:p-4">
@@ -144,10 +166,39 @@ export function DiagramView({ diagram, title }: { diagram: Diagram; title: strin
             </text>
           </g>
         ))}
+
+        {badges.map((b) => (
+          <g key={`badge-${b.id}`}>
+            <circle cx={b.x} cy={b.y} r={BADGE_R * k} fill="var(--accent)" />
+            <text x={b.x} y={b.y + 4.5 * k} textAnchor="middle" fontSize={13 * k} fontWeight={700} fill="var(--on-accent)">
+              {b.id}
+            </text>
+          </g>
+        ))}
       </svg>
       <figcaption className="mt-2 px-1 text-sm text-muted">
         {title}, drawn from your file. On each arrow, + means both change the same way, − means opposite, and ? means unclear.
+        {badges.length > 0 && " Filled circles are the tutor's loop numbers, the same ones it says out loud."}
       </figcaption>
+      {badges.length > 0 && (
+        <ul className="mt-2 space-y-0.5 px-1 text-sm" aria-label="Loop numbers used by the tutor">
+          {badges.map((b) => {
+            const loop = loops.find((l) => l.id === b.id)!;
+            return (
+              <li key={b.id}>
+                <span className="font-semibold text-accent">{b.id}</span>
+                {loop.nickname && <span className="font-semibold">, the {loop.nickname.replace(/^the /i, "")}</span>}{" "}
+                ({LOOP_WORD[b.type]}): {loop.variables.map((v) => nameOf.get(v) ?? v).join(" → ")}
+              </li>
+            );
+          })}
+          {loops.length > badges.length && (
+            <li className="text-muted">
+              {loops.length - badges.length} more {loops.length - badges.length === 1 ? "loop is" : "loops are"} not drawn; ask the tutor about them.
+            </li>
+          )}
+        </ul>
+      )}
     </figure>
   );
 }

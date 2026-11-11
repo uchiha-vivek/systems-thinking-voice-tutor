@@ -2,7 +2,7 @@
 // The client-tool definitions setup-agent.ts sends to ElevenLabs, checked against what the page handles.
 import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
-import { FIRST_MESSAGE, PRIVACY_SETTINGS, SYSTEM_PROMPT, toolConfig, TURN_SETTINGS } from "@/scripts/setup-agent";
+import { CONVERSATION_SETTINGS, FIRST_MESSAGE, PRIVACY_SETTINGS, SYSTEM_PROMPT, toolConfig, TURN_SETTINGS } from "@/scripts/setup-agent";
 import { TOOL_SPECS } from "@/lib/tool-specs";
 import { TOOL_NAMES } from "@/lib/tools";
 
@@ -49,6 +49,10 @@ describe("setup-agent", () => {
     expect(PRIVACY_SETTINGS.privacy.record_voice).toBe(false);
     const page = readFileSync(new URL("../app/tutor.tsx", import.meta.url), "utf8");
     expect(page).toContain(`deleted after ${PRIVACY_SETTINGS.privacy.retention_days} days`);
+  });
+
+  it("a session can run 30 minutes, not 10 (the 10-minute cap cut a call off mid-answer)", () => {
+    expect(CONVERSATION_SETTINGS.conversation.max_duration_seconds).toBe(1800);
   });
 
   it("the greeting is supplied by the page", () => {

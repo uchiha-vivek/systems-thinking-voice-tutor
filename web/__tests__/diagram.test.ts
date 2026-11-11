@@ -79,3 +79,20 @@ describe("parseDiagram", () => {
     expect(plain.layout_description).toBeUndefined();
   });
 });
+
+describe("loop number badges", () => {
+  it("puts one badge per drawn loop, clear of shapes and each other", async () => {
+    const { placeLoopBadges, BADGE_R } = await import("@/lib/diagram");
+    const graph = new ModelGraph(model);
+    const badges = placeLoopBadges(diagram, graph.loops);
+    expect(badges.length).toBeGreaterThan(0);
+    expect(badges.map((b) => b.id)).toEqual(graph.loops.slice(0, badges.length).map((l) => l.id));
+    for (const [i, b] of badges.entries()) {
+      for (const other of badges.slice(i + 1)) expect(Math.hypot(b.x - other.x, b.y - other.y)).toBeGreaterThan(2 * BADGE_R);
+    }
+  });
+
+  it("knows which variable each shape draws", () => {
+    expect(diagram.shapes.filter((s) => s.kind !== "alias").every((s) => s.id)).toBe(true);
+  });
+});

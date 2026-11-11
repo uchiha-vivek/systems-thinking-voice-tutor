@@ -65,6 +65,10 @@ interface Loop {
   narrative: string | null;
   variables: string[];
   edges: [string, string][];
+  /** True when the id came from the model's author; false when this engine numbered it. */
+  declared: boolean;
+  /** A short name the tutor gave this loop during the conversation, e.g. "infection spread loop". */
+  nickname?: string;
 }
 
 export type ToolResult = Record<string, unknown>;
@@ -80,6 +84,8 @@ const MAX_LOOPS = 2000; // a big stock-and-flow model can have thousands; stop l
 const MAX_SEARCH_STEPS = 3_000_000;
 const OVERVIEW_LOOPS = 8; // how many loops the overview lists before saying "and N more"
 const MAX_LISTED = 6; // longest list of choices or loops read out in one answer
+
+const NUMBERED_BY_TUTOR = "the tutor, not the author; the same number is shown on the drawn diagram";
 
 const strip = (s: string) => s.replace(/[^a-z0-9]/g, "");
 
@@ -234,6 +240,7 @@ export class ModelGraph {
         narrative: d?.narrative ?? null,
         variables: cycle,
         edges,
+        declared: Boolean(d),
       };
     });
   }
@@ -244,6 +251,7 @@ export class ModelGraph {
     for (const loop of this.loops) {
       if (s.has(norm(loop.id))) return [loop];
       if (loop.name && q.includes(norm(loop.name))) return [loop];
+      if (loop.nickname && q.includes(norm(loop.nickname))) return [loop];
     }
     const words = query.toLowerCase();
     let cands = this.loops;
@@ -262,7 +270,10 @@ export class ModelGraph {
       id: loop.id,
       type: TYPE_WORDS[loop.type],
       name: loop.name,
+      ...(loop.nickname ? { nickname: loop.nickname } : {}),
       variables: loop.variables.map((v) => this.label(v)),
+      // Only for uploads: the built-in examples' ids come from their authors.
+      ...(this.data.source ? { id_given_by: loop.declared ? "the model's author" : NUMBERED_BY_TUTOR } : {}),
     };
   }
 
@@ -294,6 +305,9 @@ export class ModelGraph {
             unclear: this.loops.filter((l) => l.type === "?").length,
           },
           author_notes: this.data.notes,
+          loop_numbering: this.loops.some((l) => !l.declared)
+            ? "The tutor numbered these loops itself, in the order it found them; the file does not name or number them. The same numbers are drawn on the diagram on the page."
+            : undefined,
         }
       : {};
     return {
@@ -442,6 +456,18 @@ export class ModelGraph {
     const graphs = this.data.behavior_graphs ?? [];
     if (!graphs.length) return { error: "This model has no behavior-over-time graph." };
     return { graphs, note: this.data.behavior_note };
+  }
+
+  /** Remember the tutor's nickname for a loop, so later answers and the drawn diagram use it. */
+  nameLoop(loopId: string, nickname: string): ToolResult {
+    const loop = this.loops.find((l) => norm(l.id) === norm(loopId));
+    if (!loop) return { error: `There is no loop ${loopId}. Use a loop id from get_overview or get_loop.` };
+    const clean = nickname.replace(/\s+/g, " ").trim().slice(0, 60);
+    if (!clean) return { error: "The nickname is empty." };
+    const taken = this.loops.find((l) => l !== loop && l.nickname && norm(l.nickname) === norm(clean));
+    if (taken) return { error: `${taken.id} is already called the ${clean}. Pick a different nickname.` };
+    loop.nickname = clean;
+    return { saved: true, loop: loop.id, nickname: clean, shown_on_page: true };
   }
 
   layout(): ToolResult {

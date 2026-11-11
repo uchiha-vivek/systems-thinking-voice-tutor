@@ -4,18 +4,23 @@ import { ConversationProvider, useConversation } from "@elevenlabs/react";
 import { ChangeEvent, FormEvent, useEffect, useRef, useState } from "react";
 
 import { ModelGraph } from "@/lib/engine";
+import { MAX_CALL_SECONDS } from "@/lib/limits";
 import { MODELS } from "@/lib/models";
-import { parseStella, StellaError } from "@/lib/stella";
+import { CallRecorder, recordingFileName } from "@/lib/recorder";
 import { clientToolsFor } from "@/lib/tools";
 import { transcriptFileName, transcriptMailto, transcriptText, type Line } from "@/lib/transcript";
+import { parseModelFile, SUPPORTED, UploadError } from "@/lib/upload";
 import { DiagramView } from "./diagram";
 import { FeedbackForm, type Session } from "./feedback-form";
-import { ThemeToggle } from "./theme-switcher";
+import { applyTheme, ThemeToggle } from "./theme-switcher";
 
 
 const MAX_FILE_BYTES = 10 * 1024 * 1024;
+const IDLE = "Press Start conversation to connect.";
+const MINUTES = MAX_CALL_SECONDS / 60;
 const UPLOAD_TAG = "[Upload]"; // marks the page's own message to the agent, so it isn't shown as the student's words
 
+const secondsSince = (t: number) => (Date.now() - t) / 1000;
 const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
 
 /** One plain sentence about what was loaded. Counts come from the engine, never from the AI. */
@@ -28,7 +33,7 @@ function openingLine(graph: ModelGraph | null) {
   const hello = "Hi, I'm your Systems Thinking tutor.";
   return graph
     ? `${hello} I've loaded ${summarize(graph)} You can ask me questions, and I can quiz you too. Want me to describe it?`
-    : `${hello} Upload your Stella model with the button on this page, and I can describe it. You can ask me questions, and I can ask you questions too.`;
+    : `${hello} Upload your model file with the button on this page, and I can describe it. You can ask me questions, and I can ask you questions too.`;
 }
 
 export function Tutor() {
@@ -43,7 +48,7 @@ function TutorPage() {
   const [loadNote, setLoadNote] = useState("");
   const [loadError, setLoadError] = useState("");
   const [agentId, setAgentId] = useState("");
-  const [status, setStatus] = useState("Not connected.");
+  const [status, setStatus] = useState(IDLE);
   const [lines, setLines] = useState<Line[]>([]);
   const [readAloud, setReadAloud] = useState(false);
   const [text, setText] = useState("");
@@ -57,26 +62,55 @@ function TutorPage() {
   const [ended, setEnded] = useState<Session | null>(null);
   const conversationIdRef = useRef("");
   const lineCountRef = useRef(0);
+  const startedAtRef = useRef(0);
+  // Recording: kept only in this page until the student downloads it.
+  const [recordOn, setRecordOn] = useState(true);
+  const [recording, setRecording] = useState<{ url: string; name: string } | null>(null);
+  const recorderRef = useRef<CallRecorder | null>(null);
+  const micRef = useRef<MediaStream | null>(null);
+  // Bumped when the tutor names a loop, so the diagram's list shows the new nickname.
+  const [, setModelVersion] = useState(0);
+  const warnTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
   const addLine = (who: string, text: string) => setLines((prev) => [...prev, { who, text }]);
 
   const conversation = useConversation({
     // eslint-disable-next-line react-hooks/refs -- the ref is read when the agent calls a tool, not while rendering
-    clientTools: clientToolsFor(() => graphRef.current),
+    clientTools: clientToolsFor(() => graphRef.current, {
+      setTheme: applyTheme,
+      onModelChange: () => setModelVersion((n) => n + 1),
+    }),
     onConnect: ({ conversationId }) => {
       conversationIdRef.current = conversationId;
+      startedAtRef.current = Date.now();
       setStatus("Connected. Start speaking.");
+      clearTimeout(warnTimerRef.current);
+      warnTimerRef.current = setTimeout(
+        () => setStatus(`One minute left. Sessions end after ${MINUTES} minutes; press Start again to keep going.`),
+        (MAX_CALL_SECONDS - 60) * 1000,
+      );
     },
-    onDisconnect: () => {
+    onDisconnect: (details) => {
+      clearTimeout(warnTimerRef.current);
+      void finishRecording();
       const talked = lineCountRef.current > 0;
       if (talked) {
         setEnded({ conversationId: conversationIdRef.current, turns: lineCountRef.current, model: graphRef.current?.data.title });
       }
-      setStatus(talked ? "Conversation ended. A short feedback form is below." : "Conversation ended.");
+      const seconds = secondsSince(startedAtRef.current);
+      const timedOut = details?.reason !== "user" && startedAtRef.current > 0 && seconds >= MAX_CALL_SECONDS - 15;
+      const why = timedOut
+        ? `The session reached its ${MINUTES}-minute limit. Press Start conversation to keep going; your model is still loaded.`
+        : details?.reason === "error"
+          ? "The connection dropped. Press Start conversation to reconnect; your model is still loaded."
+          : "Conversation ended.";
+      setStatus(talked ? `${why} A short feedback form is below.` : why);
     },
     onMessage: ({ role, message }) => {
       if (role === "user" && message.startsWith(UPLOAD_TAG)) return;
       addLine(role === "user" ? "You" : "Tutor", message);
     },
+    onAudio: (base64) => recorderRef.current?.addAgentAudio(base64),
+    onInterruption: () => recorderRef.current?.interrupt(),
     onError: (err) => setStatus(`Error: ${typeof err === "string" ? err : String(err)}`),
   });
 
@@ -112,14 +146,11 @@ function TutorPage() {
     e.target.value = ""; // so choosing the same file again still counts
     if (!file) return;
     try {
-      if (/\.(png|jpe?g|gif|webp|pdf)$/i.test(file.name)) {
-        throw new StellaError("Pictures and PDFs are not supported yet. Please upload the Stella file, which ends in .stmx.");
-      }
-      if (file.size > MAX_FILE_BYTES) throw new StellaError("That file is too large. Models up to 10 megabytes are supported.");
-      load(new ModelGraph(parseStella(await file.text())));
+      if (file.size > MAX_FILE_BYTES) throw new UploadError("That file is too large. Models up to 10 megabytes are supported.");
+      load(new ModelGraph(parseModelFile(file.name, await file.text())));
     } catch (err) {
       setLoadNote("");
-      setLoadError(err instanceof StellaError ? err.message : "That file could not be read as a Stella model.");
+      setLoadError(err instanceof UploadError ? err.message : `That file could not be read. Please upload a ${SUPPORTED} file.`);
     }
   }
 
@@ -132,9 +163,20 @@ function TutorPage() {
       setStatus("Connecting…");
       setLines([]); // each conversation starts with an empty transcript
       setEnded(null);
-      await navigator.mediaDevices.getUserMedia({ audio: true });
+      clearRecording();
+      const mic = await navigator.mediaDevices.getUserMedia({ audio: true });
+      micRef.current = mic;
+      if (recordOn) {
+        try {
+          recorderRef.current = new CallRecorder(mic);
+        } catch {
+          recorderRef.current = null; // this browser can't record; the call still works
+        }
+      }
       conversation.startSession({
         agentId,
+        // WebRTC hands the tutor's voice to onAudio at 48 kHz, which the recorder expects.
+        connectionType: "webrtc",
         dynamicVariables: { opening: openingLine(graphRef.current) },
       });
     } catch (err) {
@@ -146,13 +188,39 @@ function TutorPage() {
     if (running) conversation.endSession();
   }
 
+  async function finishRecording() {
+    const rec = recorderRef.current;
+    recorderRef.current = null;
+    micRef.current?.getTracks().forEach((t) => t.stop());
+    micRef.current = null;
+    if (!rec) return;
+    const blob = await rec.stop();
+    if (blob.size) setRecording({ url: URL.createObjectURL(blob), name: recordingFileName(new Date(), rec.mimeType) });
+  }
+
+  function clearRecording() {
+    setRecording((r) => {
+      if (r) URL.revokeObjectURL(r.url);
+      return null;
+    });
+  }
+
+  function downloadRecording() {
+    if (!recording) return;
+    const a = document.createElement("a");
+    a.href = recording.url;
+    a.download = recording.name;
+    a.click();
+  }
+
   /** Start over: end any call and clear the transcript. The loaded model stays. */
   function newConversation() {
     stop();
     setLines([]);
     setEnded(null);
+    clearRecording();
     setText("");
-    setStatus("Not connected.");
+    setStatus(IDLE);
   }
 
   const asText = () => transcriptText(lines, model?.data.title, new Date());
@@ -175,9 +243,12 @@ function TutorPage() {
   /** "Erase memory": clear the transcript from this page. */
   function eraseTranscript() {
     const ok = window.confirm(
-      "Erase this transcript from the page? This can't be undone. ElevenLabs deletes its own copy after 30 days.",
+      "Erase this transcript and recording from the page? This can't be undone. ElevenLabs deletes its own copy of the transcript after 30 days.",
     );
-    if (ok) setLines([]);
+    if (ok) {
+      setLines([]);
+      clearRecording();
+    }
   }
 
   useEffect(() => {
@@ -239,7 +310,7 @@ function TutorPage() {
           How to use it
         </h2>
         <ol className="mt-3 list-decimal space-y-1 pl-6 marker:font-semibold marker:text-accent">
-          <li>Upload your Stella model, or pick an example.</li>
+          <li>Upload your model (Stella, XMILE or Vensim), or pick an example.</li>
           <li>Press Start conversation and speak. Press Escape to end.</li>
           <li>Interrupt any time. Ask it to slow down, go faster, or say it more simply.</li>
         </ol>
@@ -262,16 +333,16 @@ function TutorPage() {
           <label htmlFor="upload" className="block text-sm font-semibold uppercase tracking-wider text-muted">
             Your model
           </label>
+          {/* No `accept` filter: phones don't know .stmx and grey the file out. onUpload checks the file instead. */}
           <input
             id="upload"
             type="file"
-            accept=".stmx,.xml,text/xml,application/xml"
             onChange={onUpload}
             aria-describedby="uploadHelp"
             className={`${field} mt-2 file:mr-4 file:rounded-lg file:border-0 file:bg-tint file:px-4 file:py-2 file:font-semibold file:text-fg`}
           />
           <p id="uploadHelp" className="mt-2 text-sm text-muted">
-            Choose a Stella file that ends in .stmx. It is read in your browser and is not sent anywhere.
+            Choose a Stella (.stmx), XMILE (.xmile or .xml) or Vensim (.mdl) file. It is read in your browser and is not sent anywhere.
           </p>
           <div className="mt-3 flex flex-wrap items-center gap-2">
             <span className="text-sm text-muted">Or try an example:</span>
@@ -299,7 +370,7 @@ function TutorPage() {
             <strong className="font-semibold">Privacy:</strong> please don&rsquo;t share personal or sensitive
             information, like your full name, address or health details. Your voice is processed by
             ElevenLabs to run the tutor, and transcripts are deleted after 30 days. Your model file stays
-            in your browser.
+            in your browser. If recording is on, the recording stays in this page until you download it.
           </p>
 
           <button
@@ -347,7 +418,7 @@ function TutorPage() {
         {diagram && model && (
           <div className="mt-6 lg:col-start-2 lg:row-span-4 lg:row-start-1 lg:mt-10">
             <div className="lg:sticky lg:top-6">
-              <DiagramView diagram={diagram} title={model.data.title} />
+              <DiagramView diagram={diagram} title={model.data.title} loops={model.loops} />
             </div>
           </div>
         )}
@@ -362,7 +433,10 @@ function TutorPage() {
                 New conversation
               </button>
               <button type="button" onClick={downloadTranscript} disabled={!lines.length} className="rounded-lg border border-fg px-3 py-1.5 text-sm font-semibold transition-colors hover:bg-fg hover:text-bg disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:bg-transparent disabled:hover:text-fg">
-                Download
+                Download transcript
+              </button>
+              <button type="button" onClick={downloadRecording} disabled={!recording} className="rounded-lg border border-fg px-3 py-1.5 text-sm font-semibold transition-colors hover:bg-fg hover:text-bg disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:bg-transparent disabled:hover:text-fg">
+                Download recording
               </button>
               <button type="button" onClick={emailTranscript} disabled={!lines.length} className="rounded-lg border border-fg px-3 py-1.5 text-sm font-semibold transition-colors hover:bg-fg hover:text-bg disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:bg-transparent disabled:hover:text-fg">
                 Email to myself
@@ -384,6 +458,16 @@ function TutorPage() {
                 className="h-5 w-5 accent-[var(--accent)]"
               />
               Let my screen reader read new transcript lines
+            </label>
+            <label className="flex w-full cursor-pointer items-center gap-2.5 text-base text-muted">
+              <input
+                type="checkbox"
+                checked={recordOn}
+                disabled={running}
+                onChange={(e) => setRecordOn(e.target.checked)}
+                className="h-5 w-5 accent-[var(--accent)]"
+              />
+              Record the conversation so I can download the audio (stays in this browser)
             </label>
           </div>
           <ol

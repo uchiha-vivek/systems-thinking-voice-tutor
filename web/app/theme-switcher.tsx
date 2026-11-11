@@ -35,7 +35,7 @@ function subscribe(onChange: () => void) {
   };
 }
 
-/** One icon button: shows a moon in light mode and a sun in dark mode, and switches to the other. */
+/** One labelled button: a moon and "Dark mode" in light mode, a sun and "Light mode" in dark mode. */
 export function ThemeToggle() {
   const shown = useSyncExternalStore(subscribe, shownTheme, () => "light" as const);
   const next = shown === "dark" ? "light" : "dark";
@@ -46,7 +46,7 @@ export function ThemeToggle() {
       onClick={() => applyTheme(next)}
       aria-label={`Switch to ${next} mode`}
       title={`Switch to ${next} mode`}
-      className="grid h-11 w-11 shrink-0 place-items-center rounded-full border border-line bg-surface text-fg shadow-card transition-colors hover:border-fg"
+      className="inline-flex h-11 shrink-0 items-center gap-2 rounded-full border border-fg bg-surface px-4 font-semibold text-fg shadow-card transition-colors hover:bg-fg hover:text-bg"
     >
       <svg aria-hidden="true" viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
         {shown === "dark" ? (
@@ -58,6 +58,7 @@ export function ThemeToggle() {
           <path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5Z" />
         )}
       </svg>
+      <span aria-hidden="true">{next === "dark" ? "Dark mode" : "Light mode"}</span>
     </button>
   );
 }
